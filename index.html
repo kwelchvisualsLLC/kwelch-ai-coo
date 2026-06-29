@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+<title>KWelch · AI COO</title>
+<!-- Phone-app (PWA) setup: lets "Add to Home Screen" launch fullscreen with an icon -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="KWelch COO" />
+<meta name="theme-color" content="#0a0a0a" />
+<link rel="apple-touch-icon" href="kwcoo-icon-180.png" />
+<link rel="manifest" href="kwcoo.webmanifest" />
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  :root{
+    /* VisualBook palette — black + gold */
+    --bg:#0a0a0a;
+    --bg2:#0d0d0d;
+    --panel:#141414;
+    --panel-2:#1c1c1c;
+    --border:#2a2a2a;
+    --border-2:rgba(201,168,76,0.45);
+    --txt:#ffffff;
+    --txt-dim:#888888;
+    --txt-faint:#5a5a5a;
+    --accent:#C9A84C;
+    --accent-2:#e0a030;
+    --gold:#C9A84C;
+    --green:#4caf78;
+    --red:#e25555;
+    --orange:#e0a030;
+    --radius:14px;
+    --shadow:0 18px 50px -24px rgba(0,0,0,0.8);
+  }
+  *{box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+  html,body{margin:0;height:100%;}
+  body{
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    background:
+      radial-gradient(1100px 600px at 10% -12%, rgba(201,168,76,0.07), transparent 55%),
+      var(--bg);
+    color:var(--txt);
+    overflow:hidden;
+  }
+  ::selection{background:var(--gold);color:#0a0a0a;}
+  #root{height:100dvh;}
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:20px;border:2px solid transparent;background-clip:padding-box;}
+  ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.16);background-clip:padding-box;}
+
+  .app{display:flex;height:100dvh;}
+  .glass{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+  }
+
+  /* sidebar */
+  .sidebar{
+    width:248px;flex-shrink:0;padding:calc(22px + env(safe-area-inset-top)) 16px 22px;display:flex;flex-direction:column;gap:6px;
+    border-right:1px solid var(--border);background:rgba(255,255,255,0.02);backdrop-filter:blur(20px);
+  }
+  .brand{padding:8px 12px 22px;}
+  .wordmark{font-size:19px;font-weight:900;letter-spacing:3px;color:var(--txt);line-height:1;}
+  .wordmark span{color:var(--gold);}
+  .brand-sub{margin-top:5px;font-size:9px;color:var(--txt-dim);letter-spacing:3px;font-weight:600;}
+  .nav-item{
+    display:flex;align-items:center;gap:12px;padding:11px 13px;border-radius:13px;cursor:pointer;
+    color:var(--txt-dim);font-size:12.5px;font-weight:600;letter-spacing:.9px;text-transform:uppercase;transition:all .18s ease;border:1px solid transparent;
+  }
+  .nav-item .ico{width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .nav-item:hover{background:var(--panel);color:var(--txt);}
+  .nav-item.active{background:rgba(201,168,76,0.10);color:var(--gold);border-color:var(--border-2);}
+  .nav-badge{margin-left:auto;font-size:11px;background:var(--gold);color:#0a0a0a;border-radius:20px;padding:1px 8px;font-weight:700;}
+  .nav-badge.red{background:var(--red);}
+  .side-foot{margin-top:auto;}
+  .level-card{padding:13px;border-radius:15px;background:var(--panel);border:1px solid var(--border);}
+  .level-card .lvl{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:13px;color:var(--txt-dim);}
+  .level-card .lvl b{color:var(--gold);font-size:15px;}
+  .xpbar{height:7px;border-radius:10px;background:rgba(255,255,255,0.08);margin-top:9px;overflow:hidden;}
+  .xpbar i{display:block;height:100%;border-radius:10px;background:linear-gradient(90deg,var(--gold),var(--orange));transition:width .6s cubic-bezier(.2,.8,.2,1);}
+  .streak{display:flex;align-items:center;gap:7px;margin-top:11px;font-size:12.5px;color:var(--txt-dim);}
+
+  /* main */
+  .main{flex:1;display:flex;flex-direction:column;min-width:0;}
+  .topbar{padding:calc(18px + env(safe-area-inset-top)) 30px 14px;display:flex;align-items:center;gap:16px;}
+  .greet h2{margin:0;font-size:21px;font-weight:700;letter-spacing:-.3px;}
+  .greet p{margin:3px 0 0;font-size:13px;color:var(--txt-dim);}
+  .cmd{flex:1;max-width:560px;margin-left:auto;position:relative;}
+  .cmd input{
+    width:100%;padding:13px 16px 13px 44px;border-radius:10px;border:1px solid var(--border);
+    background:var(--panel);color:var(--txt);font-size:14px;outline:none;transition:.2s;
+  }
+  .cmd input:focus{border-color:var(--accent);background:rgba(201,168,76,0.08);box-shadow:0 0 0 4px rgba(201,168,76,0.12);}
+  .cmd input::placeholder{color:var(--txt-faint);}
+  .cmd .ai-ico{position:absolute;left:15px;top:50%;transform:translateY(-50%);font-size:16px;}
+  .cmd-hint{position:absolute;right:13px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--txt-faint);
+    border:1px solid var(--border);border-radius:7px;padding:2px 7px;}
+  .content{flex:1;overflow-y:auto;padding:8px 30px 40px;}
+
+  /* generic */
+  .row{display:flex;gap:18px;}
+  .col{display:flex;flex-direction:column;gap:18px;}
+  .card{padding:20px;border-radius:var(--radius);}
+  .card-h{display:flex;align-items:center;gap:9px;margin-bottom:15px;}
+  .card-h h3{margin:0;font-size:15px;font-weight:650;letter-spacing:-.2px;}
+  .card-h .sub{margin-left:auto;font-size:10px;color:var(--txt-faint);text-transform:uppercase;letter-spacing:1px;font-weight:600;}
+  .pill{font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;padding:3px 9px;border-radius:20px;background:var(--panel-2);color:var(--txt-dim);border:1px solid var(--border);}
+
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:18px;}
+  .stat{padding:18px;border-radius:14px;position:relative;overflow:hidden;}
+  .stat .lab{font-size:10.5px;color:var(--txt-dim);font-weight:700;text-transform:uppercase;letter-spacing:1.4px;}
+  .stat .val{font-size:28px;font-weight:760;letter-spacing:-1px;margin-top:6px;}
+  .stat .delta{font-size:10px;margin-top:5px;text-transform:uppercase;letter-spacing:.8px;font-weight:600;}
+  .stat .ring{position:absolute;right:14px;top:14px;}
+  .up{color:var(--green);} .down{color:var(--red);}
+
+  .gauge{transform:rotate(-90deg);}
+  .gauge circle{fill:none;stroke-width:7;stroke-linecap:round;}
+  .gauge .bg{stroke:rgba(255,255,255,0.08);}
+
+  /* task list */
+  .tlist{display:flex;flex-direction:column;gap:9px;}
+  .task{
+    display:flex;align-items:flex-start;gap:13px;padding:13px 14px;border-radius:15px;
+    background:var(--panel);border:1px solid var(--border);transition:.16s;cursor:pointer;
+  }
+  .task:hover{background:var(--panel-2);border-color:var(--border-2);transform:translateY(-1px);}
+  .task.done{opacity:.5;}
+  .task.done .t-title{text-decoration:line-through;}
+  .check{
+    width:21px;height:21px;border-radius:7px;border:2px solid var(--border-2);flex-shrink:0;margin-top:1px;
+    display:grid;place-items:center;transition:.16s;font-size:12px;color:transparent;
+  }
+  .task:hover .check{border-color:var(--accent);}
+  .check.on{background:linear-gradient(135deg,var(--green),#3f9968);border-color:transparent;color:#06281d;}
+  .t-body{flex:1;min-width:0;}
+  .t-title{font-size:14px;font-weight:550;line-height:1.35;}
+  .t-meta{display:flex;align-items:center;gap:9px;margin-top:6px;flex-wrap:wrap;}
+  .chip{font-size:11px;color:var(--txt-dim);display:inline-flex;align-items:center;gap:4px;}
+  .chip.cat{background:var(--panel-2);padding:2px 8px;border-radius:20px;border:1px solid var(--border);text-transform:uppercase;letter-spacing:.7px;font-size:9.5px;font-weight:600;}
+  .stars{color:var(--gold);font-size:12px;letter-spacing:1px;flex-shrink:0;}
+  .stars .off{color:rgba(255,255,255,0.13);}
+  .due-soon{color:var(--orange);} .overdue{color:var(--red);font-weight:600;}
+  .t-side{display:flex;flex-direction:column;align-items:flex-end;gap:5px;}
+  .pscore{font-size:11px;color:var(--txt-faint);font-variant-numeric:tabular-nums;}
+
+  .sub-row{margin-left:34px;display:flex;align-items:center;gap:9px;padding:6px 0;font-size:13px;color:var(--txt-dim);}
+  .sub-check{width:16px;height:16px;border-radius:5px;border:1.5px solid var(--border-2);display:grid;place-items:center;cursor:pointer;font-size:10px;color:transparent;flex-shrink:0;}
+  .sub-check.on{background:var(--green);border-color:transparent;color:#06281d;}
+  .sub-row.done span{text-decoration:line-through;opacity:.55;}
+
+  /* suggestion */
+  .sugg{display:flex;gap:12px;padding:13px;border-radius:14px;background:linear-gradient(135deg,rgba(201,168,76,0.1),rgba(224,160,48,0.05));border:1px solid var(--border);margin-bottom:9px;}
+  .sugg .ic{font-size:18px;}
+  .sugg .txt{flex:1;font-size:13px;line-height:1.4;color:var(--txt);}
+  .sugg .txt b{color:#fff;}
+  .sugg .act{font-size:10px;color:var(--gold);font-weight:700;letter-spacing:.7px;text-transform:uppercase;cursor:pointer;white-space:nowrap;align-self:center;padding:6px 11px;border-radius:9px;border:1px solid var(--border);transition:.15s;}
+  .sugg .act:hover{background:var(--panel-2);}
+
+  /* planner */
+  .timeline{position:relative;padding-left:8px;}
+  .tblock{display:flex;gap:15px;padding:4px 0;}
+  .tblock .time{width:62px;flex-shrink:0;font-size:12.5px;color:var(--txt-faint);text-align:right;padding-top:13px;font-variant-numeric:tabular-nums;}
+  .tblock .bar{width:4px;border-radius:4px;flex-shrink:0;margin:6px 0;}
+  .tblock .blk{flex:1;padding:12px 15px;border-radius:13px;background:var(--panel);border:1px solid var(--border);margin-bottom:2px;}
+  .tblock .blk .bt{font-size:13.5px;font-weight:550;}
+  .tblock .blk .bm{font-size:11.5px;color:var(--txt-faint);margin-top:3px;}
+
+  /* revenue */
+  .rev-op{padding:15px;border-radius:15px;background:var(--panel);border:1px solid var(--border);margin-bottom:10px;}
+  .rev-op .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+  .rev-op .name{font-size:14px;font-weight:600;}
+  .rev-op .val{font-size:15px;font-weight:700;color:var(--green);white-space:nowrap;}
+  .rev-op .desc{font-size:12.5px;color:var(--txt-dim);margin-top:5px;line-height:1.4;}
+  .rev-op .foot{display:flex;align-items:center;gap:8px;margin-top:11px;}
+  .stage{font-size:9.5px;padding:3px 9px;border-radius:20px;font-weight:700;letter-spacing:1px;}
+  .stage.lead{background:rgba(201,168,76,0.18);color:#b9a6ff;}
+  .stage.contacted{background:rgba(224,160,48,0.16);color:var(--orange);}
+  .stage.proposal{background:rgba(224,160,48,0.15);color:var(--accent-2);}
+  .stage.won{background:rgba(76,175,120,0.16);color:var(--green);}
+  .mini-btn{font-size:10px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--txt-dim);cursor:pointer;padding:5px 10px;border-radius:8px;border:1px solid var(--border);transition:.15s;}
+  .mini-btn:hover{color:#fff;border-color:var(--border-2);background:var(--panel-2);}
+
+  /* coach */
+  .coach-card{padding:17px;border-radius:16px;border:1px solid var(--border);margin-bottom:12px;background:var(--panel);}
+  .coach-card .lbl{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:7px;}
+  .coach-card .body{font-size:13.5px;line-height:1.5;color:var(--txt);}
+
+  /* modal */
+  .overlay{position:fixed;inset:0;background:rgba(5,6,12,0.62);backdrop-filter:blur(6px);display:grid;place-items:center;z-index:50;animation:fade .2s;}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  @keyframes pop{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+  .modal{width:560px;max-width:92vw;max-height:88vh;overflow-y:auto;padding:26px;animation:pop .24s cubic-bezier(.2,.8,.2,1);}
+  .modal h3{margin:0 0 4px;font-size:19px;}
+  .modal .mh-sub{font-size:13px;color:var(--txt-dim);margin-bottom:20px;}
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:10.5px;color:var(--txt-dim);margin-bottom:7px;font-weight:700;text-transform:uppercase;letter-spacing:1px;}
+  .field input,.field select,.field textarea{
+    width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--border);
+    background:var(--panel-2);color:var(--txt);font-size:14px;outline:none;font-family:inherit;
+  }
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);}
+  .field-row{display:flex;gap:12px;}
+  .field-row .field{flex:1;}
+  .slider-val{float:right;color:var(--accent-2);font-weight:700;}
+  input[type=range]{accent-color:var(--accent);}
+  .live-score{display:flex;align-items:center;gap:14px;padding:14px;border-radius:14px;background:linear-gradient(135deg,rgba(201,168,76,0.14),rgba(224,160,48,0.06));border:1px solid var(--border);margin:6px 0 20px;}
+  .live-score .big{font-size:30px;font-weight:780;letter-spacing:-1px;}
+  .live-score .ld{flex:1;}
+  .live-score .ld .s1{font-size:13px;font-weight:600;}
+  .live-score .ld .s2{font-size:12px;color:var(--txt-dim);margin-top:2px;}
+  .btn{padding:11px 18px;border-radius:10px;border:1px solid var(--border-2);background:var(--panel-2);color:var(--txt);font-size:13.5px;font-weight:700;letter-spacing:.3px;cursor:pointer;transition:.16s;}
+  .btn:hover{background:#242424;border-color:var(--gold);}
+  .btn.primary{background:var(--gold);border-color:transparent;color:#0a0a0a;}
+  .btn.primary:hover{background:var(--orange);filter:none;}
+  .btn.danger{color:var(--red);border-color:rgba(226,85,85,0.3);background:rgba(226,85,85,0.08);}
+  .modal-foot{display:flex;gap:10px;justify-content:flex-end;margin-top:8px;}
+  .modal-foot .left{margin-right:auto;}
+
+  /* toast */
+  .toast-wrap{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);z-index:99;display:flex;flex-direction:column;gap:10px;align-items:center;}
+  .toast{padding:13px 20px;border-radius:14px;background:#141414;border:1px solid var(--border-2);
+    font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:10px;animation:pop .3s;box-shadow:var(--shadow);white-space:nowrap;}
+  .toast .xp{color:var(--gold);}
+
+  .empty{text-align:center;padding:50px 20px;color:var(--txt-faint);}
+  .empty .e-ico{font-size:38px;opacity:.5;margin-bottom:12px;}
+  .seg{display:flex;gap:4px;padding:4px;border-radius:13px;background:var(--panel);border:1px solid var(--border);width:fit-content;margin-bottom:18px;}
+  .seg button{padding:7px 15px;border-radius:9px;border:none;background:transparent;color:var(--txt-dim);font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;cursor:pointer;transition:.15s;}
+  .seg button.active{background:var(--panel-2);color:#fff;}
+  .add-btn{padding:9px 15px;border-radius:10px;background:var(--gold);color:#0a0a0a;font-size:13px;font-weight:700;letter-spacing:.3px;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px;transition:.15s;}
+  .add-btn:hover{background:var(--orange);}
+  .add-btn:hover{filter:brightness(1.08);}
+  .health-bd{display:flex;flex-direction:column;gap:11px;}
+  .hb-row{display:flex;align-items:center;gap:11px;}
+  .hb-row .hl{font-size:10px;color:var(--txt-dim);width:130px;text-transform:uppercase;letter-spacing:.8px;font-weight:600;}
+  .hb-bar{flex:1;height:8px;border-radius:8px;background:rgba(255,255,255,0.07);overflow:hidden;}
+  .hb-bar i{display:block;height:100%;border-radius:8px;}
+  .hb-row .hv{font-size:12px;color:var(--txt);width:34px;text-align:right;font-variant-numeric:tabular-nums;}
+  .section-title{font-size:13px;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.6px;margin:6px 2px 12px;}
+
+  /* edits board */
+  .typebar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+  .type-pill{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:11px;background:var(--panel);border:1px solid var(--border);font-size:12px;font-weight:600;color:var(--txt-dim);cursor:pointer;transition:.15s;}
+  .type-pill:hover{border-color:var(--border-2);color:var(--txt);}
+  .type-pill.active{background:rgba(201,168,76,0.12);border-color:var(--border-2);color:#fff;}
+  .type-pill .n{font-variant-numeric:tabular-nums;font-weight:800;color:var(--gold);}
+  .board{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;align-items:start;}
+  .bcol{background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:15px;padding:13px;min-height:90px;}
+  .bcol-h{display:flex;align-items:center;gap:8px;margin-bottom:11px;font-size:10.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--txt-dim);}
+  .bcol-h .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .bcol-h .cnt{margin-left:auto;font-size:11px;background:var(--panel-2);border:1px solid var(--border);border-radius:20px;padding:1px 8px;color:var(--txt-dim);font-weight:700;}
+  .ecard{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:9px;transition:.15s;}
+  .ecard:hover{border-color:var(--border-2);}
+  .ecard .et{font-size:13.5px;font-weight:600;line-height:1.35;}
+  .ecard .em{display:flex;align-items:center;gap:7px;margin-top:8px;flex-wrap:wrap;}
+  .type-tag{font-size:9.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding:3px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:4px;}
+  .ecard .ef{display:flex;align-items:center;gap:6px;margin-top:11px;}
+  .stepbtn{font-size:15px;line-height:1;color:var(--txt-dim);cursor:pointer;padding:4px 8px;border-radius:8px;border:1px solid var(--border);background:var(--panel-2);transition:.15s;user-select:none;}
+  .stepbtn:hover{color:#fff;border-color:var(--border-2);}
+  .stepbtn.go:hover{color:var(--green);}
+  .stepbtn.x{margin-left:auto;}
+  .stepbtn.x:hover{color:var(--red);}
+
+  /* call backs */
+  .cb{display:flex;align-items:flex-start;gap:13px;padding:14px 15px;border-radius:15px;background:var(--panel);border:1px solid var(--border);margin-bottom:10px;transition:.15s;}
+  .cb:hover{border-color:var(--border-2);}
+  .cb.urgent{border-color:rgba(226,85,85,0.45);background:linear-gradient(135deg,rgba(226,85,85,0.07),transparent);}
+  .cb.done{opacity:.5;}
+  .cb-av{width:40px;height:40px;border-radius:12px;flex-shrink:0;display:grid;place-items:center;font-size:15px;font-weight:800;background:rgba(201,168,76,0.14);color:var(--gold);border:1px solid var(--border-2);}
+  .cb-b{flex:1;min-width:0;}
+  .cb-n{font-size:14.5px;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .cb-tel{font-size:13px;color:var(--gold);text-decoration:none;font-weight:600;}
+  .cb-tel:hover{text-decoration:underline;}
+  .cb-r{font-size:12.5px;color:var(--txt-dim);margin-top:4px;line-height:1.4;}
+  .cb-side{display:flex;flex-direction:column;gap:6px;align-items:flex-end;}
+  .urgent-flag{font-size:9px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--red);background:rgba(226,85,85,0.12);border:1px solid rgba(226,85,85,0.3);border-radius:20px;padding:2px 8px;}
+
+  /* responsive — keep it usable in any window size */
+  @media (max-width:1180px){
+    .stat-grid{grid-template-columns:repeat(2,1fr);}
+    .row{flex-direction:column;}
+    .col{flex:1 1 auto!important;}
+    .board{grid-template-columns:repeat(2,1fr);}
+  }
+  @media (max-width:780px){
+    .sidebar{width:208px;}
+    .content{padding:8px 18px 40px;}
+    .topbar{flex-wrap:wrap;padding:16px 18px 12px;}
+    .cmd{max-width:none;margin-left:0;flex-basis:100%;order:3;}
+    .stat-grid{grid-template-columns:1fr 1fr;gap:12px;}
+    .stat .val{font-size:24px;}
+  }
+  @media (max-width:560px){
+    html,body{height:auto;overflow:auto;-webkit-overflow-scrolling:touch;}
+    #root{height:auto;min-height:100dvh;}
+    .app{flex-direction:column;height:auto;min-height:100dvh;}
+    .main{flex:none;}
+    .content{flex:none;overflow:visible;padding-bottom:calc(40px + env(safe-area-inset-bottom));}
+    .sidebar{width:100%;flex-direction:row;flex-wrap:wrap;align-items:center;gap:4px;padding:calc(12px + env(safe-area-inset-top)) 14px 12px;border-right:none;border-bottom:1px solid var(--border);}
+    .topbar{padding:14px 18px 12px;}
+    .brand{width:100%;padding:0 4px 8px;}
+    .nav-item{padding:8px 11px;}
+    .nav-item span:not(.ico):not(.nav-badge){display:none;}
+    .side-foot{margin-left:auto;margin-top:0;}
+    .level-card{padding:8px 12px;}
+    .level-card .xpbar,.level-card .streak{display:none;}
+    .stat-grid{grid-template-columns:1fr 1fr;}
+    .board{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+window.addEventListener('error',function(e){
+  var r=document.getElementById('root');
+  if(r) r.innerHTML='<pre style="color:#ff6b6b;padding:20px;font-size:13px;white-space:pre-wrap">RUNTIME ERROR: '+(e.message||'')+'\n\n'+((e.error&&e.error.stack)||'')+'</pre>';
+});
+</script>
+<script id="appcode" type="text/plain">
+const {useState,useEffect,useMemo,useRef} = React;
+
+/* ============================ DOMAIN LOGIC ============================ */
+
+const CATEGORIES = {
+  shoot:    {emoji:"📸", label:"Client Shoots",      kw:["shoot","wedding","photoshoot","session","portrait","headshot","video","film","record","event","ceremony","reception"]},
+  editing:  {emoji:"✂️", label:"Editing",            kw:["edit","color grade","cull","export","render","retouch","cut","footage","gallery","deliver"]},
+  comms:    {emoji:"📧", label:"Client Comms",        kw:["email","reply","call","follow up","followup","message","respond","contract","quote","contact","reach out"]},
+  revenue:  {emoji:"💰", label:"Revenue",             kw:["invoice","upsell","pitch","proposal","retainer","sell","deal","lead","sponsor","partnership","payment","deposit"]},
+  content:  {emoji:"🎥", label:"Content Creation",     kw:["youtube","reel","short","content","script","film a","b-roll","vlog","tutorial"]},
+  social:   {emoji:"📱", label:"Social Media",         kw:["instagram","post","story","tiktok","caption","schedule post","social","ig "]},
+  network:  {emoji:"🤝", label:"Networking",           kw:["network","meet","coffee","chamber","intro","connect","referral"]},
+  website:  {emoji:"💻", label:"Website",              kw:["website","portfolio","seo","landing","web "]},
+  product:  {emoji:"🛍️", label:"Digital Products",     kw:["lut","preset","pack","course","template","digital product","gumroad","ebook"]},
+  accounting:{emoji:"🧾",label:"Accounting",          kw:["tax","bookkeep","quickbooks","expense","receipt","accounting","insurance"]},
+  travel:   {emoji:"🚘", label:"Travel",              kw:["drive","travel","napa","vacaville","trip","flight","airport","commute"]},
+  personal: {emoji:"🏋️", label:"Personal",            kw:["gym","workout","lunch","family","personal","rest","sleep"]},
+  learning: {emoji:"📚", label:"Learning",            kw:["learn","read","study","tutorial","watch","research","course "]},
+  growth:   {emoji:"🧠", label:"Business Growth",      kw:["strategy","plan","goal","grow","scale","brand","outreach","district","restaurant","gym client","real estate"]},
+  maint:    {emoji:"⚙️", label:"Maintenance",         kw:["clean","backup","firmware","update","calibrat","maintenance","sensor","battery","organize","archive","sd card"]},
+};
+const CAT_KEYS = Object.keys(CATEGORIES);
+
+/* ---- EDITS: types you categorize your edit jobs by, + the editing pipeline ---- */
+const EDIT_TYPES = {
+  wedding:    {emoji:"💍", label:"Wedding",          color:"#C9A84C"},
+  realestate: {emoji:"🏡", label:"Real Estate",      color:"#4caf78"},
+  restaurant: {emoji:"🍽️", label:"Restaurant",       color:"#e0a030"},
+  social:     {emoji:"📱", label:"Reel / Social",    color:"#22d3ee"},
+  school:     {emoji:"🎓", label:"School / District", color:"#8a9bff"},
+  corporate:  {emoji:"🏢", label:"Corporate",        color:"#b9a6ff"},
+  event:      {emoji:"🎤", label:"Event",            color:"#ff9f43"},
+  brand:      {emoji:"✨", label:"Brand / Promo",    color:"#e25555"},
+  portrait:   {emoji:"📸", label:"Portrait / Photo", color:"#5ad1c9"},
+  other:      {emoji:"🎬", label:"Other",            color:"#9a9a9a"},
+};
+const EDIT_TYPE_KEYS = Object.keys(EDIT_TYPES);
+// The pipeline an edit moves through. Advance with ▶, step back with ◀.
+const EDIT_STAGES = [
+  {k:"queued",    label:"To Edit",        color:"#888888"},
+  {k:"editing",   label:"Editing",        color:"#e0a030"},
+  {k:"review",    label:"Color / Review", color:"#8a9bff"},
+  {k:"delivered", label:"Delivered",      color:"#4caf78"},
+];
+
+function seedEdits(){
+  return [
+    {id:"se0", title:"Sarah & James — wedding film", type:"wedding",   stage:"editing",   deadline:todayISO(2), note:"Highlight reel + full ceremony", sample:true, created:Date.now()},
+    {id:"se1", title:"Vine & Barrel — promo reel",   type:"restaurant", stage:"queued",    deadline:todayISO(4), note:"3 verticals for IG", sample:true, created:Date.now()-1},
+    {id:"se2", title:"1420 Oak Ln — listing video",  type:"realestate", stage:"review",    deadline:todayISO(1), note:"HDR stills + walkthrough", sample:true, created:Date.now()-2},
+    {id:"se3", title:"VUSD — board meeting recap",   type:"school",     stage:"queued",    deadline:todayISO(6), note:"", sample:true, created:Date.now()-3},
+  ];
+}
+function seedCalls(){
+  return [
+    {id:"sc0", name:"Maria — Vine & Barrel", phone:"7075551042", reason:"Confirm shoot date + menu items to feature", urgent:true,  done:false, sample:true, created:Date.now()},
+    {id:"sc1", name:"Coach Daniels (VUSD)",  phone:"7075559871", reason:"Senior night highlight package pricing", urgent:false, done:false, sample:true, created:Date.now()-1},
+  ];
+}
+
+function categorize(text){
+  const t=text.toLowerCase();
+  let best="growth", bestHits=0;
+  for(const k of CAT_KEYS){
+    let hits=0;
+    for(const w of CATEGORIES[k].kw){ if(t.includes(w)) hits+= w.length>4?2:1; }
+    if(hits>bestHits){bestHits=hits;best=k;}
+  }
+  return best;
+}
+
+// Smart task expansion templates
+const TEMPLATES = {
+  wedding:["Confirm timeline & shot list with couple","Backup & format SD cards","Charge all batteries","Import & backup footage","Cull and select","Color grade highlights","Audio cleanup","Edit highlight reel","Cut Instagram teaser","Export 4K deliverables","Deliver online gallery","Request testimonial","Invoice remaining balance","Archive project"],
+  restaurant:["Scout location & lighting","Confirm menu items to feature","Prep gimbal & lenses","Shoot dishes (hero + detail)","Capture ambiance b-roll","Color grade for warmth","Edit 30s promo reel","Cut 3 vertical clips","Deliver files + usage license","Pitch monthly content retainer","Invoice"],
+  "real estate":["Confirm address & access","Shoot exteriors (golden hour)","Shoot interiors wide + detail","Capture drone aerials","Edit & HDR blend stills","Edit walkthrough video","Deliver MLS-ready gallery","Invoice agent"],
+  headshot:["Confirm wardrobe & vibe","Set up lighting & backdrop","Shoot session","Cull selects","Retouch finals","Deliver gallery","Request review","Invoice"],
+  brand:["Discovery call & moodboard","Pre-pro shot list","Shoot product/lifestyle","Edit photos","Edit hero video","Cut social cutdowns","Deliver assets","Pitch ongoing retainer","Invoice"],
+  youtube:["Pick topic & hook","Write script/outline","Film a-roll","Capture b-roll","Edit video","Design thumbnail","Write title + description","Schedule upload","Plan IG/Short repurpose"],
+  reel:["Choose hook & concept","Film clips","Edit + captions","Add trending audio","Write caption + hashtags","Schedule post"],
+  district:["Build target list of schools","Find decision-maker contacts","Personalize outreach email","Send proposal / partnership deck","Follow up (3-touch)","Book discovery call","Close retainer"],
+  product:["Define product & promise","Build the asset","Design cover & mockups","Write sales page copy","Set up Gumroad listing","Record promo reel","Launch to email list","Post launch content"],
+  lut:["Finalize LUT/preset files","Build before/after previews","Write product description","Upload to Gumroad","Create launch reel","Email list announcement","Post 3 promo clips"],
+};
+function expandTemplate(text){
+  const t=text.toLowerCase();
+  for(const key in TEMPLATES){ if(t.includes(key)) return {key, subs:TEMPLATES[key]}; }
+  // generic shoot fallback
+  if(/shoot|session|video|film/.test(t)) return {key:"shoot", subs:["Confirm details & timeline","Prep & charge gear","Backup SD cards","Shoot","Import & backup footage","Edit","Deliver","Invoice"]};
+  return null;
+}
+
+// Natural language date parsing
+const WEEKDAYS=["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];
+function parseDate(text){
+  const t=text.toLowerCase();
+  const now=new Date(); now.setHours(0,0,0,0);
+  const mk=(d)=>{const x=new Date(now);x.setDate(x.getDate()+d);return x;};
+  let m;
+  if(/\btoday|tonight\b/.test(t)) return {date:mk(0),m:t.match(/today|tonight/)[0]};
+  if(/\btomorrow\b/.test(t)) return {date:mk(1),m:"tomorrow"};
+  if((m=t.match(/in (\d+) days?/))) return {date:mk(parseInt(m[1])),m:m[0]};
+  if(/this weekend/.test(t)){ const dow=now.getDay(); return {date:mk((6-dow+7)%7||6),m:"this weekend"}; }
+  if(/end of (the )?week/.test(t)){ const dow=now.getDay(); return {date:mk((5-dow+7)%7||5),m:"end of week"}; }
+  for(let i=0;i<7;i++){
+    const re=new RegExp("(before |by |on |next |this )?"+WEEKDAYS[i]);
+    if((m=t.match(re))){
+      const dow=now.getDay(); let diff=(i-dow+7)%7;
+      if(diff===0) diff=7;
+      if(/next /.test(m[0])) diff+= (diff<=7?0:0); // next keeps next occurrence
+      return {date:mk(diff),m:m[0].trim()};
+    }
+  }
+  return null;
+}
+function parseRevenue(text){ const m=text.replace(/,/g,"").match(/\$\s?(\d+(\.\d+)?)\s?k?/i); if(!m) return 0; let v=parseFloat(m[1]); if(/k/i.test(m[0])) v*=1000; return Math.round(v); }
+
+function parseNaturalLanguage(raw){
+  let title=raw.trim();
+  const d=parseDate(raw);
+  const rev=parseRevenue(raw);
+  const cat=categorize(raw);
+  let deadline=null;
+  if(d){ deadline=d.date.toISOString().slice(0,10);
+    title=title.replace(new RegExp("\\b(before |by |on |next |this )?"+d.m+"\\b","i"),"").replace(/\s+/g," ").trim();
+  }
+  if(rev) title=title.replace(/\$\s?\d[\d,]*(\.\d+)?\s?k?/i,"").replace(/\s+/g," ").trim();
+  title=title.replace(/^(remind me to|i need to|please|can you|todo:?)\s+/i,"");
+  title=title.charAt(0).toUpperCase()+title.slice(1);
+  return {title, deadline, revenue:rev, category:cat};
+}
+
+// THE PRIORITY FORMULA
+function daysUntil(deadline){ if(!deadline) return null;
+  const a=new Date(deadline); a.setHours(0,0,0,0);
+  const b=new Date(); b.setHours(0,0,0,0);
+  return Math.round((a-b)/86400000);
+}
+function priorityScore(task){
+  // weights
+  const W={deadline:34, revenue:26, client:16, growth:10, stress:8, time:6};
+  const du=daysUntil(task.deadline);
+  let urgency;
+  if(du===null) urgency=0.18;
+  else if(du<0) urgency=1.0;
+  else if(du===0) urgency=0.95;
+  else if(du===1) urgency=0.82;
+  else if(du<=3) urgency=0.62;
+  else if(du<=7) urgency=0.42;
+  else if(du<=14) urgency=0.28;
+  else urgency=0.16;
+  const revN=Math.min(1,(task.revenue||0)/3000);
+  const client=(task.clientImportance||3)/5;
+  const growth=(task.growth||2)/5;
+  const stress=(task.stress||2)/5;
+  const timePen=Math.min(1,(task.estHours||1)/8);
+  let s = W.deadline*urgency + W.revenue*revN + W.client*client + W.growth*growth + W.stress*stress - W.time*timePen;
+  s=Math.max(0,Math.min(100,Math.round(s)));
+  return s;
+}
+function scoreToStars(s){ if(s>=78)return 5; if(s>=60)return 4; if(s>=42)return 3; if(s>=24)return 2; return 1; }
+const STAR_LABEL={5:"Critical",4:"High",3:"Medium",2:"Low",1:"Someday"};
+
+// Daily planner builder
+function buildPlanner(tasks){
+  const today=tasks.filter(t=>!t.done && (daysUntil(t.deadline)!==null && daysUntil(t.deadline)<=1 || priorityScore(t)>=55))
+    .sort((a,b)=>priorityScore(b)-priorityScore(a)).slice(0,7);
+  const blocks=[]; let cur=9*60; let lunched=false;
+  const DAY_END=19*60; // wind down by 7pm
+  const push=(title,mins,meta,color)=>{ blocks.push({time:cur,mins,title,meta,color}); cur+=mins; };
+  push("Morning reset · gym + coffee",90,"Energy first — your best edits happen after","#34e0a1");
+  let overflow=0;
+  for(const t of today){
+    if(!lunched && cur>=12*60){ push("Lunch break",45,"Step away from the screen","#ff9f43"); lunched=true; }
+    const mins=Math.max(30,Math.round((t.estHours||1)*60));
+    if(cur+mins>DAY_END){ overflow++; continue; } // day is full — rolls to tomorrow
+    const c=CATEGORIES[t.category];
+    push(t.title, mins, `${c.emoji} ${c.label} · ~${t.estHours||1}h`, "#7c5cff");
+    cur+=10; // buffer
+  }
+  if(!lunched){ push("Lunch break",45,"Step away from the screen","#ff9f43"); }
+  if(cur<=18*60) push("Post today's reel + check DMs",30,"Consistency compounds — don't skip","#22d3ee");
+  if(cur<=19*60) push("Invoices & inbox zero",30,"Close the financial loop daily","#ffcf5c");
+  if(overflow>0) push(`${overflow} more task${overflow>1?"s":""} → rolled to tomorrow`,0,"Your COO protected your day from overload","#646a80");
+  return blocks;
+}
+function fmtTime(min){ let h=Math.floor(min/60)%24, m=min%60; const ap=h>=12?"PM":"AM"; h=h%12||12; return `${h}:${m.toString().padStart(2,"0")} ${ap}`; }
+
+// AI suggestion engine — data driven
+function generateSuggestions(tasks, state){
+  const out=[];
+  const open=tasks.filter(t=>!t.done);
+  const overdue=open.filter(t=>{const d=daysUntil(t.deadline);return d!==null&&d<0;});
+  overdue.slice(0,2).forEach(t=>out.push({ic:"🚨",txt:`<b>${t.title}</b> is overdue. ${t.category==="revenue"?"Money on the table — chase it today.":"Knock it out or reschedule before it snowballs."}`,act:"Open",tid:t.id}));
+  const invoices=open.filter(t=>/invoice|payment|balance/i.test(t.title));
+  if(invoices.length) out.push({ic:"💸",txt:`You have <b>${invoices.length} unpaid invoice${invoices.length>1?"s":""}</b> in flight. Cash flow is king — send a friendly nudge.`,act:"Revenue",nav:"revenue"});
+  // posting recency
+  const lastPost=state.lastPostDate?daysUntil(state.lastPostDate)*-1:99;
+  if(lastPost>=3) out.push({ic:"📱",txt:`You haven't posted in <b>${lastPost===99?"a while":lastPost+" days"}</b>. The algorithm forgets fast — film a quick reel today.`,act:"Add task",add:"Film + post Instagram reel today"});
+  // revenue progress
+  const revToday=open.filter(t=>t.category==="revenue").reduce((s,t)=>s+(t.revenue||0),0);
+  if(revToday < state.dailyGoal) out.push({ic:"💰",txt:`Pipeline today is <b>$${revToday.toLocaleString()}</b> vs your $${state.dailyGoal.toLocaleString()} goal. Pitch 2 local restaurants or upsell a past client.`,act:"Revenue",nav:"revenue"});
+  // maintenance nudges (rotating)
+  const maint=["Back up this week's SD cards to two drives","Clean your camera sensor & lenses","Check for lens & camera firmware updates","Update your portfolio with a recent shoot","Email 3 school districts about storytelling retainer"];
+  out.push({ic:"🧠",txt:maint[new Date().getDate()%maint.length]+".",act:"Add task",add:maint[new Date().getDate()%maint.length]});
+  // someday / growth
+  if(open.filter(t=>t.category==="product").length===0) out.push({ic:"🛍️",txt:`No <b>digital product</b> tasks active. Your 170K audience is a build-once-sell-forever asset — relaunch the LUT pack.`,act:"Add task",add:"Launch Signature LUT Pack on Gumroad"});
+  return out.slice(0,5);
+}
+
+/* ============================ SEED DATA ============================ */
+const todayISO=(o=0)=>{const d=new Date();d.setDate(d.getDate()+o);return d.toISOString().slice(0,10);};
+// SAMPLE data — clearly tagged sample:true. Each item disappears the moment
+// you add your OWN task/opportunity to that same category.
+function seedTasks(){
+  const base=[
+    {title:"Edit Sarah & James wedding highlight reel", category:"editing", deadline:todayISO(1), revenue:0, clientImportance:5, growth:2, stress:4, estHours:5, done:false, subs:[]},
+    {title:"Napa winery brand shoot", category:"shoot", deadline:todayISO(0), revenue:1800, clientImportance:5, growth:3, stress:3, estHours:4, done:false, subs:[]},
+    {title:"Send invoice — Thompson family session balance", category:"revenue", deadline:todayISO(-2), revenue:650, clientImportance:4, growth:1, stress:2, estHours:0.5, done:false, subs:[]},
+    {title:"Film + post Instagram reel", category:"social", deadline:todayISO(0), revenue:0, clientImportance:2, growth:4, stress:1, estHours:1, done:false, subs:[]},
+    {title:"Back up last week's SD cards", category:"maint", deadline:todayISO(1), revenue:0, clientImportance:1, growth:1, stress:3, estHours:0.5, done:false, subs:[]},
+    {title:"Email 5 school districts — storytelling partnership", category:"growth", deadline:todayISO(4), revenue:5000, clientImportance:4, growth:5, stress:2, estHours:1.5, done:false, subs:[]},
+  ];
+  return base.map((t,i)=>({...t, id:"seed"+i, sample:true, created:Date.now()-i*1000}));
+}
+function seedRevenue(){
+  return [
+    {id:"r1", name:"Fairfield-Suisun School District", value:18000, desc:"Annual storytelling retainer — district-wide event & promo coverage.", stage:"proposal", sample:true},
+    {id:"r2", name:"3x Vacaville restaurants", value:7200, desc:"Monthly social content packages @ $800/mo each.", stage:"lead", sample:true},
+    {id:"r3", name:"Signature LUT Pack relaunch", value:4000, desc:"170K audience × digital product. Passive, build-once.", stage:"lead", sample:true},
+  ];
+}
+
+/* ============================ APP ============================ */
+const DEFAULT_STATE={dailyGoal:500, monthlyGoal:30000, level:1, xp:0, xpMax:300, streak:0, lastPostDate:null};
+
+function load(key,fallback){ try{const v=localStorage.getItem(key);return v?JSON.parse(v):fallback;}catch{return fallback;} }
+
+// Bookings created in VisualBook (same origin) drop entries in "kw_edit_inbox".
+// Drain them into the Edits board, deduped by bookingId, then clear the inbox.
+function drainEditInbox(setEdits){
+  let inbox=[];
+  try{ inbox=JSON.parse(localStorage.getItem("kw_edit_inbox")||"[]"); }catch{ inbox=[]; }
+  if(!Array.isArray(inbox)||!inbox.length) return;
+  setEdits(prev=>{
+    const have=new Set(prev.map(e=>e.bookingId).filter(Boolean));
+    const add=inbox
+      .filter(x=>x&&x.bookingId&&!have.has(x.bookingId))
+      .map(x=>({id:x.id||("vb"+x.bookingId), title:x.title||"New shoot edit", type:x.type||"other",
+                stage:x.stage||"queued", deadline:x.deadline||null, note:x.note||"",
+                bookingId:x.bookingId, created:x.created||Date.now()}));
+    if(!add.length) return prev;
+    return [...add, ...prev.filter(x=>!x.sample)];   // real edits replace the samples
+  });
+  try{ localStorage.removeItem("kw_edit_inbox"); }catch{ /* */ }
+}
+
+// ---- cloud sync (same backend as VisualBook; isolated /api/coo endpoint) ----
+const COO_API="https://kwelch-outreach-hub.onrender.com/api/coo";
+const COO_KEY="vbk_9f3a1c7e8b2d4f60a5e1c9d3b7f2a4e8c6109d52";
+const COO_KEYS=["kw_tasks_v2","kw_rev_v2","kw_edits_v1","kw_calls_v1","kw_state_v2"];
+function cooTimeout(p,ms){ return Promise.race([p,new Promise((_,r)=>setTimeout(()=>r(new Error("timeout")),ms))]); }
+async function cooPull(){ const res=await cooTimeout(fetch(COO_API,{headers:{"x-vb-key":COO_KEY}}),70000); if(!res.ok) throw new Error("pull "+res.status); return res.json(); }
+async function cooPush(key,value){ const res=await cooTimeout(fetch(COO_API,{method:"POST",headers:{"content-type":"application/json","x-vb-key":COO_KEY},body:JSON.stringify({key,value})}),70000); if(!res.ok) throw new Error("push "+res.status); }
+function cooMeaningful(v){ return Array.isArray(v) ? v.some(x=>!x||!x.sample) : (v && typeof v==="object" && Object.keys(v).length>0); }
+
+function App(){
+  const [view,setView]=useState("dashboard");
+  const [tasks,setTasks]=useState(()=>load("kw_tasks_v2",seedTasks()));
+  const [revenue,setRevenue]=useState(()=>load("kw_rev_v2",seedRevenue()));
+  const [edits,setEdits]=useState(()=>load("kw_edits_v1",seedEdits()));
+  const [callbacks,setCallbacks]=useState(()=>load("kw_calls_v1",seedCalls()));
+  const [state,setState]=useState(()=>load("kw_state_v2",DEFAULT_STATE));
+  const [cmd,setCmd]=useState("");
+  const [preview,setPreview]=useState(null);
+  const [editing,setEditing]=useState(null);
+  const [toasts,setToasts]=useState([]);
+  const [cloudMsg,setCloudMsg]=useState("");
+  const cloudReady=useRef(false);
+  const pushTimers=useRef({});
+
+  // Save to localStorage (instant + offline) AND push to the cloud (debounced) once synced.
+  function cooSave(key,value){
+    try{ localStorage.setItem(key,JSON.stringify(value)); }catch{ /* */ }
+    if(!cloudReady.current) return;
+    if(Array.isArray(value)&&value.length===0) return; // never let an empty list overwrite the cloud
+    clearTimeout(pushTimers.current[key]);
+    pushTimers.current[key]=setTimeout(()=>{
+      setCloudMsg("Saving…");
+      cooPush(key,value)
+        .then(()=>{ setCloudMsg("✓ Saved"); setTimeout(()=>setCloudMsg(""),1200); })
+        .catch(()=>setCloudMsg("Offline — saved on device"));
+    },700);
+  }
+  useEffect(()=>cooSave("kw_tasks_v2",tasks),[tasks]);
+  useEffect(()=>cooSave("kw_rev_v2",revenue),[revenue]);
+  useEffect(()=>cooSave("kw_edits_v1",edits),[edits]);
+  useEffect(()=>cooSave("kw_calls_v1",callbacks),[callbacks]);
+  useEffect(()=>cooSave("kw_state_v2",state),[state]);
+
+  // On open: pull everything from the cloud (source of truth). Seed it the first time.
+  useEffect(()=>{
+    let cancelled=false;
+    const setters={kw_tasks_v2:setTasks,kw_rev_v2:setRevenue,kw_edits_v1:setEdits,kw_calls_v1:setCallbacks,kw_state_v2:setState};
+    (async()=>{
+      try{
+        setCloudMsg("Syncing…");
+        const server=await cooPull();
+        if(cancelled) return;
+        // Collections except edits (handled below so we can fold in cross-device bookings).
+        for(const k of ["kw_tasks_v2","kw_rev_v2","kw_calls_v1","kw_state_v2"]){
+          const sv=server[k];
+          if(sv!==null && sv!==undefined){ setters[k](sv); try{localStorage.setItem(k,JSON.stringify(sv));}catch{} }
+          else { const loc=load(k,null); if(cooMeaningful(loc)) await cooPush(k,loc); }
+        }
+        // Edits board + cross-device booking inbox (bookings made on another device).
+        let baseEdits = Array.isArray(server.kw_edits_v1) ? server.kw_edits_v1
+                       : (cooMeaningful(load("kw_edits_v1",null)) ? load("kw_edits_v1",[]) : []);
+        const inbox = Array.isArray(server.kw_edit_inbox) ? server.kw_edit_inbox : [];
+        const have = new Set(baseEdits.map(e=>e.bookingId).filter(Boolean));
+        const add = inbox.filter(x=>x&&x.bookingId&&!have.has(x.bookingId)).map(x=>({
+          id:x.id||("vb"+x.bookingId), title:x.title||"New shoot edit", type:x.type||"other",
+          stage:x.stage||"queued", deadline:x.deadline||null, note:x.note||"", bookingId:x.bookingId, created:x.created||Date.now()}));
+        const finalEdits = [...add, ...baseEdits.filter(x=>!x.sample)];
+        setEdits(finalEdits);
+        try{ localStorage.setItem("kw_edits_v1", JSON.stringify(finalEdits)); }catch{}
+        await cooPush("kw_edits_v1", finalEdits);
+        if(inbox.length) await cooPush("kw_edit_inbox", []);   // inbox consumed
+        if(!cancelled){ cloudReady.current=true; setCloudMsg("✓ Synced"); setTimeout(()=>setCloudMsg(""),1800); }
+      }catch{ if(!cancelled) setCloudMsg("Offline — saved on device"); }
+    })();
+    return ()=>{cancelled=true;};
+  },[]);
+
+  // Pull in any bookings created over in VisualBook (same-origin localStorage handoff).
+  useEffect(()=>{
+    drainEditInbox(setEdits);
+    const onStorage=(e)=>{ if(e.key==="kw_edit_inbox") drainEditInbox(setEdits); };
+    window.addEventListener("storage",onStorage);
+    return ()=>window.removeEventListener("storage",onStorage);
+  },[]);
+
+  const toast=(msg,xp)=>{ const id=Math.random(); setToasts(t=>[...t,{id,msg,xp}]); setTimeout(()=>setToasts(t=>t.filter(x=>x.id!==id)),2600); };
+  const addXp=(n)=>setState(s=>{let xp=s.xp+n,level=s.level,xpMax=s.xpMax; while(xp>=xpMax){xp-=xpMax;level++;xpMax=Math.round(xpMax*1.25);} return {...s,xp,level,xpMax};});
+
+  const openTasks=useMemo(()=>tasks.filter(t=>!t.done),[tasks]);
+  const sorted=useMemo(()=>[...tasks].sort((a,b)=>(a.done-b.done)||priorityScore(b)-priorityScore(a)),[tasks]);
+
+  function handleCmd(e){
+    if(e.key!=="Enter"||!cmd.trim())return;
+    const tpl=expandTemplate(cmd);
+    const parsed=parseNaturalLanguage(cmd);
+    setPreview({raw:cmd, parsed, tpl});
+    setCmd("");
+  }
+  function commitTask(t){
+    const nt={ id:"t"+Date.now(), title:t.title, category:t.category, deadline:t.deadline||null,
+      revenue:t.revenue||0, clientImportance:t.clientImportance||3, growth:t.growth||2, stress:t.stress||2,
+      estHours:t.estHours||1, done:false, created:Date.now(), subs:(t.subs||[]).map(s=>({t:s,d:false})) };
+    setTasks(p=>[nt,...p]); toast("Task added by AI COO", "+5"); addXp(5);
+  }
+  function toggleTask(id){
+    setTasks(p=>p.map(t=>{
+      if(t.id!==id)return t;
+      const done=!t.done;
+      if(done){ const stars=scoreToStars(priorityScore(t)); toast(`✓ ${STAR_LABEL[stars]} task done`, "+"+(stars*8)); addXp(stars*8);
+        if(t.category==="social") setState(s=>({...s,lastPostDate:todayISO(0)}));
+      }
+      return {...t,done};
+    }));
+  }
+  function toggleSub(tid,i){ setTasks(p=>p.map(t=> t.id!==tid?t:{...t,subs:t.subs.map((s,j)=>j===i?{...s,d:!s.d}:s)})); }
+  function delTask(id){ setTasks(p=>p.filter(t=>t.id!==id)); setEditing(null); }
+  function saveTask(t){ setTasks(p=>p.map(x=>x.id===t.id?t:x)); setEditing(null); toast("Task updated"); }
+
+  function quickAdd(title){ const p=parseNaturalLanguage(title); commitTask({...p}); }
+
+  // EDITS
+  function addEdit(e){ if(!e.title.trim())return; setEdits(p=>[{id:"e"+Date.now(),title:e.title.trim(),type:e.type||"other",stage:"queued",deadline:e.deadline||null,note:e.note||"",created:Date.now()},...p.filter(x=>!x.sample)]); toast("Edit added to the queue"); }
+  function moveEdit(id,dir){ setEdits(p=>p.map(x=>{ if(x.id!==id)return x; const i=EDIT_STAGES.findIndex(s=>s.k===x.stage); const ni=Math.max(0,Math.min(EDIT_STAGES.length-1,i+dir)); const ns=EDIT_STAGES[ni].k; if(ns==="delivered"&&x.stage!=="delivered"){toast("✓ Edit delivered","+12");addXp(12);} return {...x,stage:ns}; })); }
+  function delEdit(id){ setEdits(p=>p.filter(x=>x.id!==id)); }
+  // CALL BACKS
+  function addCall(c){ if(!c.name.trim())return; setCallbacks(p=>[{id:"c"+Date.now(),name:c.name.trim(),phone:(c.phone||"").trim(),reason:(c.reason||"").trim(),urgent:!!c.urgent,done:false,created:Date.now()},...p.filter(x=>!x.sample)]); toast("Added to call-back list"); }
+  function toggleCall(id){ setCallbacks(p=>p.map(x=>{ if(x.id!==id)return x; const done=!x.done; if(done){toast("✓ Called back","+5");addXp(5);} return {...x,done}; })); }
+  function delCall(id){ setCallbacks(p=>p.filter(x=>x.id!==id)); }
+
+  const editsOpen=edits.filter(e=>e.stage!=="delivered").length;
+  const callsOpen=callbacks.filter(c=>!c.done).length;
+
+  const navItems=[
+    {k:"dashboard",label:"Dashboard"},
+    {k:"tasks",label:"Tasks",badge:openTasks.length},
+    {k:"edits",label:"Edits",badge:editsOpen},
+    {k:"callbacks",label:"Call Backs",badge:callsOpen},
+    {k:"planner",label:"Daily Planner"},
+    {k:"revenue",label:"Revenue Mode",badge:revenue.length},
+    {k:"coach",label:"Business Coach"},
+  ];
+
+  const hour=new Date().getHours();
+  const greet=hour<12?"Good morning":hour<18?"Good afternoon":"Good evening";
+
+  return (
+    <div className="app">
+      {/* SIDEBAR */}
+      <div className="sidebar">
+        <div className="brand">
+          <div className="wordmark">KWELCH<span>COO</span></div>
+          <div className="brand-sub">KWELCHVISUALS</div>
+        </div>
+        {navItems.map(n=>(
+          <div key={n.k} className={"nav-item"+(view===n.k?" active":"")} onClick={()=>setView(n.k)}>
+            <span className="ico"><Icon d={NAV_ICONS[n.k]} active={view===n.k}/></span><span>{n.label}</span>
+            {n.badge?<span className={"nav-badge"+((n.k==="tasks"&&tasks.some(t=>!t.done&&daysUntil(t.deadline)<0))||(n.k==="callbacks"&&callbacks.some(c=>!c.done&&c.urgent))||(n.k==="edits"&&edits.some(e=>e.stage!=="delivered"&&daysUntil(e.deadline)<0))?" red":"")}>{n.badge}</span>:null}
+          </div>
+        ))}
+        <div className="side-foot">
+          <div className="level-card">
+            <div className="lvl"><span>Business Level</span><b>Lv {state.level}</b></div>
+            <div className="xpbar"><i style={{width:(state.xp/state.xpMax*100)+"%"}}></i></div>
+            <div className="streak">🔥 <b style={{color:"var(--orange)"}}>{state.streak}-day</b> streak · {state.xp}/{state.xpMax} XP</div>
+          </div>
+        </div>
+      </div>
+
+      {/* MAIN */}
+      <div className="main">
+        <div className="topbar">
+          <div className="greet">
+            <h2>{greet}, Keith 👋 {cloudMsg && <span style={{fontSize:11,fontWeight:600,color:cloudMsg.indexOf("Offline")===0?"var(--orange)":"var(--gold)",letterSpacing:0}}>· ☁ {cloudMsg}</span>}</h2>
+            <p>{new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"})} · {openTasks.length} open · {openTasks.filter(t=>daysUntil(t.deadline)<0).length} overdue</p>
+          </div>
+          <div className="cmd">
+            <span className="ai-ico">✨</span>
+            <input value={cmd} onChange={e=>setCmd(e.target.value)} onKeyDown={handleCmd}
+              placeholder={`Tell your COO anything — "Edit John's wedding before Friday"`} />
+            <span className="cmd-hint">⏎ AI</span>
+          </div>
+        </div>
+
+        <div className="content">
+          {view==="dashboard" && <Dashboard {...{tasks,sorted,openTasks,revenue,state,toggleTask,setEditing,setView,quickAdd}}/>}
+          {view==="tasks" && <Tasks {...{sorted,toggleTask,toggleSub,setEditing,quickAdd}}/>}
+          {view==="edits" && <Edits {...{edits,addEdit,moveEdit,delEdit}}/>}
+          {view==="callbacks" && <CallBacks {...{callbacks,addCall,toggleCall,delCall}}/>}
+          {view==="planner" && <Planner tasks={tasks}/>}
+          {view==="revenue" && <Revenue {...{revenue,setRevenue,toast}}/>}
+          {view==="coach" && <Coach {...{tasks,state}}/>}
+        </div>
+      </div>
+
+      {/* PREVIEW MODAL (smart add) */}
+      {preview && <PreviewModal preview={preview} onClose={()=>setPreview(null)} onCommit={(t)=>{commitTask(t);setPreview(null);}}/>}
+      {editing && <EditModal task={editing} onClose={()=>setEditing(null)} onSave={saveTask} onDelete={delTask}/>}
+
+      <div className="toast-wrap">
+        {toasts.map(t=><div key={t.id} className="toast">{t.msg} {t.xp&&<span className="xp">{t.xp} XP</span>}</div>)}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- shared bits ---------- */
+// VisualBook-style thin line icons
+function Icon({d,active,size=21}){ return (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+    stroke={active?"#C9A84C":"#888888"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    {Array.isArray(d)?d.map((p,i)=><path key={i} d={p}/>):<path d={d}/>}
+  </svg>); }
+const NAV_ICONS={
+  dashboard:"M3 11l9-8 9 8M5 10v10h14V10",
+  tasks:["M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2","M9 5a2 2 0 002 2h2a2 2 0 002-2 2 2 0 00-2-2h-2a2 2 0 00-2 2z","M9 14l2 2 4-4"],
+  edits:["M6 3a3 3 0 100 6 3 3 0 000-6z","M6 15a3 3 0 100 6 3 3 0 000-6z","M20 4L8.5 15.5M14.5 14.5L20 20M8.5 8.5L11 11"],
+  callbacks:"M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.36 1.9.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0122 16.92z",
+  planner:"M4 5h16v15H4zM4 9h16M8 3v4M16 3v4",
+  revenue:"M3 17l6-6 4 4 8-8M21 7v6h-6",
+  coach:["M9 18h6M10 21h4","M12 3a6 6 0 00-4 10.5c.7.7 1 1.3 1 2.5h6c0-1.2.3-1.8 1-2.5A6 6 0 0012 3z"],
+};
+function Stars({n}){ return <span className="stars">{[1,2,3,4,5].map(i=><span key={i} className={i<=n?"":"off"}>★</span>)}</span>; }
+function Gauge({val,color,size=46}){
+  const r=size/2-4, c=2*Math.PI*r;
+  return <svg className="gauge" width={size} height={size}>
+    <circle className="bg" cx={size/2} cy={size/2} r={r}/>
+    <circle cx={size/2} cy={size/2} r={r} stroke={color} strokeDasharray={c} strokeDashoffset={c*(1-val/100)}/>
+  </svg>;
+}
+function DueChip({deadline}){
+  const d=daysUntil(deadline);
+  if(deadline===null||d===null) return null;
+  let cls="",txt="";
+  if(d<0){cls="overdue";txt=`${-d}d overdue`;}
+  else if(d===0){cls="due-soon";txt="Today";}
+  else if(d===1){cls="due-soon";txt="Tomorrow";}
+  else txt=`${d} days`;
+  return <span className={"chip "+cls}>🗓️ {txt}</span>;
+}
+function TaskRow({t,toggleTask,toggleSub,setEditing,showSubs}){
+  const s=priorityScore(t), stars=scoreToStars(s);
+  const c=CATEGORIES[t.category];
+  const [open,setOpen]=useState(false);
+  const hasSubs=t.subs&&t.subs.length>0;
+  return <div>
+    <div className={"task"+(t.done?" done":"")} onClick={()=>setEditing(t)}>
+      <div className={"check"+(t.done?" on":"")} onClick={e=>{e.stopPropagation();toggleTask(t.id);}}>✓</div>
+      <div className="t-body">
+        <div className="t-title">{t.title}</div>
+        <div className="t-meta">
+          <span className="chip cat">{c.emoji} {c.label}</span>
+          <DueChip deadline={t.deadline}/>
+          {t.revenue>0 && <span className="chip" style={{color:"var(--green)"}}>💵 ${t.revenue.toLocaleString()}</span>}
+          {t.estHours && <span className="chip">⏱ {t.estHours}h</span>}
+          {hasSubs && <span className="chip" onClick={e=>{e.stopPropagation();setOpen(o=>!o);}} style={{cursor:"pointer",color:"var(--accent-2)"}}>📋 {t.subs.filter(x=>x.d).length}/{t.subs.length} steps {open?"▾":"▸"}</span>}
+        </div>
+      </div>
+      <div className="t-side">
+        <Stars n={stars}/>
+        <span className="pscore" title="AI priority score">{s}/100 · {STAR_LABEL[stars]}</span>
+      </div>
+    </div>
+    {open && hasSubs && t.subs.map((s,i)=>(
+      <div key={i} className={"sub-row"+(s.d?" done":"")}>
+        <div className={"sub-check"+(s.d?" on":"")} onClick={()=>toggleSub(t.id,i)}>✓</div>
+        <span>{s.t}</span>
+      </div>
+    ))}
+  </div>;
+}
+
+/* ---------- DASHBOARD ---------- */
+function Dashboard({tasks,sorted,openTasks,revenue,state,toggleTask,setEditing,setView,quickAdd}){
+  const critical=sorted.filter(t=>!t.done && scoreToStars(priorityScore(t))>=4).slice(0,5);
+  const suggestions=generateSuggestions(tasks,state);
+  const pipeline=revenue.reduce((s,r)=>s+r.value,0);
+  // health metrics
+  const overdueRatio=openTasks.length? openTasks.filter(t=>daysUntil(t.deadline)<0).length/openTasks.length:0;
+  const lastPost=state.lastPostDate?-daysUntil(state.lastPostDate):99;
+  const health={
+    "Pipeline strength":Math.min(100,Math.round(pipeline/300)),
+    "Task hygiene":Math.round((1-overdueRatio)*100),
+    "Content cadence":Math.max(0,100-lastPost*18),
+    "Revenue pace":Math.min(100,Math.round(openTasks.filter(t=>t.category==="revenue").reduce((s,t)=>s+(t.revenue||0),0)/state.dailyGoal*40)+20),
+  };
+  const healthScore=Math.round(Object.values(health).reduce((a,b)=>a+b,0)/4);
+  const doneToday=tasks.filter(t=>t.done).length;
+  const prod=Math.min(100, 40 + doneToday*12);
+  const mission=critical[0];
+
+  return <div>
+    <div className="stat-grid">
+      <div className="stat glass">
+        <div className="lab">Business Health</div>
+        <div className="val" style={{color:healthScore>70?"var(--green)":healthScore>45?"var(--gold)":"var(--red)"}}>{healthScore}</div>
+        <div className="delta up">▲ thriving</div>
+        <div className="ring"><Gauge val={healthScore} color="var(--green)"/></div>
+      </div>
+      <div className="stat glass">
+        <div className="lab">Productivity</div>
+        <div className="val" style={{color:"var(--accent-2)"}}>{prod}</div>
+        <div className="delta up">{doneToday} done today</div>
+        <div className="ring"><Gauge val={prod} color="var(--accent-2)"/></div>
+      </div>
+      <div className="stat glass">
+        <div className="lab">Open Pipeline</div>
+        <div className="val">${(pipeline/1000).toFixed(1)}k</div>
+        <div className="delta up">{revenue.length} live deals</div>
+      </div>
+      <div className="stat glass">
+        <div className="lab">Monthly Goal</div>
+        <div className="val" style={{color:"var(--gold)"}}>${(state.monthlyGoal/1000)}k</div>
+        <div className="delta">{Math.round(pipeline/state.monthlyGoal*100)}% in pipeline</div>
+      </div>
+    </div>
+
+    <div className="row">
+      <div className="col" style={{flex:1.55}}>
+        {tasks.length===0 && <div className="card glass" style={{background:"linear-gradient(135deg,rgba(201,168,76,0.16),rgba(224,160,48,0.06))"}}>
+          <div className="card-h"><h3>👋 Welcome, Keith — let's set up your day</h3></div>
+          <div style={{fontSize:14,color:"var(--txt-dim)",lineHeight:1.6,marginBottom:14}}>
+            This is your clean slate. Nothing here is real until <b style={{color:"var(--txt)"}}>you</b> add it. Use the <b style={{color:"var(--gold)"}}>✨ command bar at the top</b> and just type naturally — your COO sorts out the category, deadline, and priority for you. Try one:
+          </div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+            {["Edit the wedding before Friday","Pitch 3 local restaurants $2000","Post Instagram reel today","Back up SD cards"].map((ex,i)=>(
+              <button key={i} className="btn" style={{fontSize:12.5,padding:"9px 13px"}} onClick={()=>quickAdd(ex)}>+ {ex}</button>
+            ))}
+          </div>
+        </div>}
+        {mission && <div className="card glass" style={{background:"linear-gradient(135deg,rgba(201,168,76,0.16),rgba(224,160,48,0.06))"}}>
+          <div className="card-h"><h3>🎯 Today's Mission</h3><span className="sub">Highest-leverage move</span></div>
+          <div style={{fontSize:18,fontWeight:650,marginBottom:8}}>{mission.title}</div>
+          <div style={{fontSize:13,color:"var(--txt-dim)",lineHeight:1.5}}>
+            Your AI COO ranks this #1 today — {CATEGORIES[mission.category].label.toLowerCase()}{mission.revenue>0?`, $${mission.revenue.toLocaleString()} at stake`:""}{daysUntil(mission.deadline)!==null?`, due ${daysUntil(mission.deadline)<=0?"now":"in "+daysUntil(mission.deadline)+"d"}`:""}. Do this first.
+          </div>
+          <div style={{display:"flex",gap:10,marginTop:14}}>
+            <button className="btn primary" onClick={()=>toggleTask(mission.id)}>Mark Done · +XP</button>
+            <button className="btn" onClick={()=>setView("planner")}>See full plan</button>
+          </div>
+        </div>}
+
+        {tasks.length>0 && <div className="card glass">
+          <div className="card-h"><h3>🔥 Critical & High Priority</h3><span className="sub">auto-ranked</span></div>
+          <div className="tlist">
+            {critical.length?critical.map(t=><TaskRow key={t.id} t={t} toggleTask={toggleTask} toggleSub={()=>{}} setEditing={setEditing}/>):
+              <div className="empty"><div className="e-ico">🎉</div>Nothing critical right now. You're on top of it.</div>}
+          </div>
+        </div>}
+      </div>
+
+      <div className="col" style={{flex:1}}>
+        <div className="card glass">
+          <div className="card-h"><h3>🧠 AI Suggestions</h3></div>
+          {suggestions.map((s,i)=>(
+            <div key={i} className="sugg">
+              <span className="ic">{s.ic}</span>
+              <span className="txt" dangerouslySetInnerHTML={{__html:s.txt}}/>
+              <span className="act" onClick={()=>{ if(s.add)quickAdd(s.add); else if(s.nav)setView(s.nav); else if(s.tid)setEditing(tasks.find(t=>t.id===s.tid)); }}>{s.act}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="card glass">
+          <div className="card-h"><h3>💗 Business Health Breakdown</h3></div>
+          <div className="health-bd">
+            {Object.entries(health).map(([k,v])=>(
+              <div key={k} className="hb-row">
+                <span className="hl">{k}</span>
+                <div className="hb-bar"><i style={{width:v+"%",background:v>65?"linear-gradient(90deg,var(--green),#3f9968)":v>40?"linear-gradient(90deg,var(--gold),var(--orange))":"linear-gradient(90deg,var(--red),#c94545)"}}></i></div>
+                <span className="hv">{v}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>;
+}
+
+/* ---------- TASKS ---------- */
+function Tasks({sorted,toggleTask,toggleSub,setEditing,quickAdd}){
+  const [filter,setFilter]=useState("all");
+  const [adding,setAdding]=useState("");
+  const filters=[["all","All"],["open","Open"],["critical","Critical"],["revenue","💰 Revenue"],["done","Done"]];
+  const list=sorted.filter(t=>{
+    if(filter==="open")return !t.done;
+    if(filter==="done")return t.done;
+    if(filter==="critical")return !t.done&&scoreToStars(priorityScore(t))>=4;
+    if(filter==="revenue")return !t.done&&t.category==="revenue";
+    return true;
+  });
+  return <div>
+    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:4}}>
+      <div className="seg">{filters.map(([k,l])=><button key={k} className={filter===k?"active":""} onClick={()=>setFilter(k)}>{l}</button>)}</div>
+      <div style={{marginLeft:"auto",display:"flex",gap:8,flex:1,maxWidth:420}}>
+        <input style={{flex:1,padding:"9px 13px",borderRadius:11,border:"1px solid var(--border-2)",background:"#1c1c1c",color:"var(--txt)",fontSize:13,outline:"none"}}
+          value={adding} onChange={e=>setAdding(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&adding.trim()){quickAdd(adding);setAdding("");}}}
+          placeholder="Quick add — type naturally, AI sorts it…"/>
+        <button className="add-btn" onClick={()=>{if(adding.trim()){quickAdd(adding);setAdding("");}}}>＋ Add</button>
+      </div>
+    </div>
+    <div className="card glass">
+      <div className="tlist">
+        {list.length?list.map(t=><TaskRow key={t.id} t={t} toggleTask={toggleTask} toggleSub={toggleSub} setEditing={setEditing} showSubs/>):
+          <div className="empty"><div className="e-ico">📭</div>No tasks here.</div>}
+      </div>
+    </div>
+  </div>;
+}
+
+/* ---------- EDITS ---------- */
+const INP={flex:1,minWidth:150,padding:"11px 13px",borderRadius:10,border:"1px solid var(--border)",background:"var(--panel-2)",color:"var(--txt)",fontSize:13.5,outline:"none",fontFamily:"inherit"};
+function Edits({edits,addEdit,moveEdit,delEdit}){
+  const [title,setTitle]=useState("");
+  const [type,setType]=useState("wedding");
+  const [deadline,setDeadline]=useState("");
+  const [filter,setFilter]=useState("all");
+
+  const active=edits.filter(e=>e.stage!=="delivered");
+  const counts={}; EDIT_TYPE_KEYS.forEach(k=>counts[k]=active.filter(e=>e.type===k).length);
+  const shown=filter==="all"?edits:edits.filter(e=>e.type===filter);
+  const submit=()=>{ if(!title.trim())return; addEdit({title,type,deadline}); setTitle("");setDeadline(""); };
+
+  return <div>
+    {/* categorize summary — your edit backlog at a glance */}
+    <div className="typebar">
+      <span className={"type-pill"+(filter==="all"?" active":"")} onClick={()=>setFilter("all")}>All <span className="n">{active.length}</span></span>
+      {EDIT_TYPE_KEYS.filter(k=>counts[k]>0).map(k=>(
+        <span key={k} className={"type-pill"+(filter===k?" active":"")} onClick={()=>setFilter(filter===k?"all":k)}>
+          {EDIT_TYPES[k].emoji} {EDIT_TYPES[k].label} <span className="n">{counts[k]}</span>
+        </span>
+      ))}
+    </div>
+
+    {/* quick add */}
+    <div className="card glass" style={{marginBottom:16}}>
+      <div className="card-h"><h3>✂️ Add an edit to the queue</h3><span className="sub">categorize it · then move it down the pipeline</span></div>
+      <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+        <input style={{...INP,flex:"1 1 220px"}} placeholder="What needs editing? (e.g. Smith wedding film)" value={title} onChange={e=>setTitle(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")submit();}}/>
+        <select style={{...INP,flex:"0 0 180px"}} value={type} onChange={e=>setType(e.target.value)}>
+          {EDIT_TYPE_KEYS.map(k=><option key={k} value={k}>{EDIT_TYPES[k].emoji} {EDIT_TYPES[k].label}</option>)}
+        </select>
+        <input type="date" style={{...INP,flex:"0 0 150px"}} value={deadline} onChange={e=>setDeadline(e.target.value)}/>
+        <button className="add-btn" onClick={submit}>＋ Add</button>
+      </div>
+    </div>
+
+    {/* pipeline board */}
+    <div className="board">
+      {EDIT_STAGES.map(st=>{
+        const col=shown.filter(e=>e.stage===st.k).sort((a,b)=>((daysUntil(a.deadline)??999)-(daysUntil(b.deadline)??999)));
+        return <div key={st.k} className="bcol">
+          <div className="bcol-h"><span className="dot" style={{background:st.color}}></span>{st.label}<span className="cnt">{col.length}</span></div>
+          {col.length?col.map(e=>{
+            const ty=EDIT_TYPES[e.type]||EDIT_TYPES.other;
+            const si=EDIT_STAGES.findIndex(s=>s.k===e.stage);
+            return <div key={e.id} className="ecard">
+              <div className="et">{e.title}</div>
+              {e.note&&<div style={{fontSize:11.5,color:"var(--txt-faint)",marginTop:4,lineHeight:1.4}}>{e.note}</div>}
+              <div className="em">
+                <span className="type-tag" style={{background:ty.color+"22",color:ty.color}}>{ty.emoji} {ty.label}</span>
+                <DueChip deadline={e.deadline}/>
+              </div>
+              <div className="ef">
+                {si>0 && <span className="stepbtn" title="Move back a stage" onClick={()=>moveEdit(e.id,-1)}>◀</span>}
+                {si<EDIT_STAGES.length-1 && <span className="stepbtn go" title="Advance a stage" onClick={()=>moveEdit(e.id,1)}>▶</span>}
+                <span className="stepbtn x" title="Remove" onClick={()=>delEdit(e.id)}>✕</span>
+              </div>
+            </div>;
+          }):<div style={{fontSize:12,color:"var(--txt-faint)",padding:"6px 2px"}}>—</div>}
+        </div>;
+      })}
+    </div>
+  </div>;
+}
+
+/* ---------- CALL BACKS ---------- */
+function CallBacks({callbacks,addCall,toggleCall,delCall}){
+  const [name,setName]=useState(""),[phone,setPhone]=useState(""),[reason,setReason]=useState(""),[urgent,setUrgent]=useState(false);
+  const [showDone,setShowDone]=useState(false);
+  const pending=callbacks.filter(c=>!c.done).sort((a,b)=>((b.urgent?1:0)-(a.urgent?1:0))||(a.created-b.created));
+  const done=callbacks.filter(c=>c.done);
+  const list=showDone?done:pending;
+  const submit=()=>{ if(!name.trim())return; addCall({name,phone,reason,urgent}); setName("");setPhone("");setReason("");setUrgent(false); };
+  const initials=(n)=>(n.replace(/[^a-zA-Z ]/g,"").trim().split(/\s+/).map(w=>w[0]).slice(0,2).join("").toUpperCase())||"•";
+
+  return <div>
+    <div className="card glass" style={{marginBottom:16}}>
+      <div className="card-h"><h3>📞 Who do you need to call back?</h3><span className="sub">on your phone, tap a number to dial</span></div>
+      <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:10}}>
+        <input style={{...INP,flex:"1 1 180px"}} placeholder="Name" value={name} onChange={e=>setName(e.target.value)}/>
+        <input type="tel" style={{...INP,flex:"1 1 150px"}} placeholder="Phone (optional)" value={phone} onChange={e=>setPhone(e.target.value)}/>
+      </div>
+      <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
+        <input style={{...INP,flex:"1 1 240px"}} placeholder="Why? (e.g. confirm date, send quote)" value={reason} onChange={e=>setReason(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")submit();}}/>
+        <label style={{display:"flex",alignItems:"center",gap:7,fontSize:12.5,color:"var(--txt-dim)",cursor:"pointer",userSelect:"none"}}>
+          <input type="checkbox" checked={urgent} onChange={e=>setUrgent(e.target.checked)} style={{accentColor:"var(--red)",width:16,height:16}}/> Urgent
+        </label>
+        <button className="add-btn" onClick={submit}>＋ Add</button>
+      </div>
+    </div>
+
+    <div className="seg" style={{marginBottom:14}}>
+      <button className={!showDone?"active":""} onClick={()=>setShowDone(false)}>To Call ({pending.length})</button>
+      <button className={showDone?"active":""} onClick={()=>setShowDone(true)}>Done ({done.length})</button>
+    </div>
+
+    {list.length?list.map(c=>(
+      <div key={c.id} className={"cb"+(c.urgent&&!c.done?" urgent":"")+(c.done?" done":"")}>
+        <div className="cb-av">{initials(c.name)}</div>
+        <div className="cb-b">
+          <div className="cb-n">{c.name}{c.phone&&<a className="cb-tel" href={"tel:"+c.phone.replace(/[^0-9+]/g,"")}>{c.phone}</a>}</div>
+          {c.reason&&<div className="cb-r">{c.reason}</div>}
+        </div>
+        <div className="cb-side">
+          {c.urgent&&!c.done&&<span className="urgent-flag">Urgent</span>}
+          <span className="mini-btn" onClick={()=>toggleCall(c.id)}>{c.done?"Reopen":"Called ✓"}</span>
+          <span className="mini-btn" onClick={()=>delCall(c.id)}>Remove</span>
+        </div>
+      </div>
+    )):<div className="empty"><div className="e-ico">{showDone?"📭":"📞"}</div>{showDone?"No completed call-backs yet.":"All caught up — nobody to call back."}</div>}
+  </div>;
+}
+
+/* ---------- PLANNER ---------- */
+function Planner({tasks}){
+  const blocks=useMemo(()=>buildPlanner(tasks),[tasks]);
+  return <div>
+    <div className="card glass" style={{marginBottom:16,background:"linear-gradient(135deg,rgba(201,168,76,0.14),rgba(224,160,48,0.05))"}}>
+      <div className="card-h"><h3>☼ Today's Smart Schedule</h3><span className="sub">auto-built from your priorities · adjusts as things change</span></div>
+      <div style={{fontSize:13,color:"var(--txt-dim)",lineHeight:1.5}}>Your COO sequenced today around energy, deadlines, and revenue. Edits to tasks reshuffle this automatically.</div>
+    </div>
+    <div className="card glass">
+      <div className="timeline">
+        {blocks.map((b,i)=>(
+          <div key={i} className="tblock">
+            <div className="time">{fmtTime(b.time)}</div>
+            <div className="bar" style={{background:b.color}}></div>
+            <div className="blk">
+              <div className="bt">{b.title}</div>
+              <div className="bm">{b.meta} · {b.mins}min</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>;
+}
+
+/* ---------- REVENUE ---------- */
+const STAGES=["lead","contacted","proposal","won"];
+function Revenue({revenue,setRevenue,toast}){
+  const [name,setName]=useState(""),[val,setVal]=useState(""),[desc,setDesc]=useState("");
+  const total=revenue.reduce((s,r)=>s+r.value,0);
+  const advance=(id)=>setRevenue(p=>p.map(r=>{if(r.id!==id)return r;const i=STAGES.indexOf(r.stage);if(i<3){const ns=STAGES[i+1];if(ns==="won")toast("🎉 Deal won! +"+(r.value)+" pipeline");return{...r,stage:ns};}return r;}));
+  const add=()=>{ if(!name.trim())return; setRevenue(p=>[{id:"r"+Date.now(),name,value:parseRevenue("$"+val)||parseInt(val)||0,desc:desc||"New opportunity",stage:"lead"},...p]); setName("");setVal("");setDesc(""); toast("Opportunity added to pipeline"); };
+  const del=(id)=>setRevenue(p=>p.filter(r=>r.id!==id));
+  const ideas=["Email past clients a 'book your fall session' offer","Pitch a winery a recurring monthly reel package","Bundle a LUT pack upsell into every wedding delivery","Offer real estate agents a 5-listing retainer","Create a Father's Day mini-session promo"];
+  return <div className="row">
+    <div className="col" style={{flex:1.5}}>
+      <div className="card glass" style={{background:"linear-gradient(135deg,rgba(76,175,120,0.14),rgba(224,160,48,0.05))"}}>
+        <div className="card-h"><h3>💰 Revenue Mode</h3><span className="sub">total open pipeline</span></div>
+        <div style={{fontSize:34,fontWeight:780,letterSpacing:-1,color:"var(--green)"}}>${total.toLocaleString()}</div>
+        <div style={{fontSize:13,color:"var(--txt-dim)",marginTop:4}}>{revenue.length} active opportunities · advance each stage to close</div>
+      </div>
+      <div className="card glass">
+        <div className="card-h"><h3>📈 Pipeline</h3>
+          <span style={{marginLeft:"auto",display:"flex",gap:8,alignItems:"center"}}>
+            <input value={name} onChange={e=>setName(e.target.value)} placeholder="Opportunity" style={{width:130,padding:"7px 10px",borderRadius:9,border:"1px solid var(--border-2)",background:"#1c1c1c",color:"var(--txt)",fontSize:12,outline:"none"}}/>
+            <input value={val} onChange={e=>setVal(e.target.value)} placeholder="$ value" style={{width:74,padding:"7px 10px",borderRadius:9,border:"1px solid var(--border-2)",background:"#1c1c1c",color:"var(--txt)",fontSize:12,outline:"none"}}/>
+            <button className="add-btn" onClick={add}>＋</button>
+          </span>
+        </div>
+        {revenue.map(r=>(
+          <div key={r.id} className="rev-op">
+            <div className="top">
+              <div className="name">{r.name}</div>
+              <div className="val">{r.value?"$"+r.value.toLocaleString():"—"}</div>
+            </div>
+            <div className="desc">{r.desc}</div>
+            <div className="foot">
+              <span className={"stage "+r.stage}>{r.stage.toUpperCase()}</span>
+              {r.stage!=="won" && <span className="mini-btn" onClick={()=>advance(r.id)}>Advance →</span>}
+              <span className="mini-btn" style={{marginLeft:"auto"}} onClick={()=>del(r.id)}>Remove</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+    <div className="col" style={{flex:1}}>
+      <div className="card glass">
+        <div className="card-h"><h3>💡 Revenue Ideas</h3><span className="sub">from your COO</span></div>
+        {ideas.map((s,i)=><div key={i} className="sugg"><span className="ic">💵</span><span className="txt">{s}.</span></div>)}
+      </div>
+    </div>
+  </div>;
+}
+
+/* ---------- COACH ---------- */
+function Coach({tasks,state}){
+  const open=tasks.filter(t=>!t.done);
+  const cards=[
+    {lbl:"One thing to improve",ic:"📈",color:"var(--accent-2)",body:`You have ${open.filter(t=>daysUntil(t.deadline)<0).length} overdue items. Block 90 minutes this morning to clear the oldest two — overdue work quietly tanks your Business Health score and your peace of mind.`},
+    {lbl:"One thing to automate",ic:"⚙️",color:"var(--accent)",body:"Set up an auto-reply + booking link for new inquiries. You're losing leads in the gap between 'they email' and 'you reply after a shoot.' A Calendly + canned response captures them 24/7."},
+    {lbl:"Marketing idea",ic:"📣",color:"var(--orange)",body:"Film a 30-second 'a day in the life of a Napa videographer' reel. Behind-the-scenes outperforms polished work for reach — and it's the cheapest lead gen you have."},
+    {lbl:"Revenue idea",ic:"💰",color:"var(--green)",body:"Convert one-off clients into retainers. Offer your top 3 past business clients a monthly content package — recurring revenue is the fastest path to your $1M target."},
+    {lbl:"Networking opportunity",ic:"🤝",color:"var(--gold)",body:"Reach out to one local chamber of commerce this week. Chambers are full of restaurants, gyms, and real estate offices — exactly your ideal recurring clients, all in one room."},
+    {lbl:"AI tool worth trying",ic:"🧠",color:"var(--accent-2)",body:"Use AI to draft your follow-up and proposal emails. Speed-to-response wins deals — let the COO write the first draft so you just review and send."},
+  ];
+  return <div>
+    <div className="card glass" style={{marginBottom:16,background:"linear-gradient(135deg,rgba(201,168,76,0.14),rgba(224,160,48,0.05))"}}>
+      <div className="card-h"><h3>✦ Daily Business Coaching</h3><span className="sub">{new Date().toLocaleDateString("en-US",{weekday:"long"})}'s brief</span></div>
+      <div style={{fontSize:13.5,color:"var(--txt)",lineHeight:1.55}}>Six moves to make today's KWelchVisuals run like a world-class operation. Every one answers: does this make more money, reduce stress, deliver faster, or grow the business?</div>
+    </div>
+    <div className="row">
+      <div className="col" style={{flex:1}}>{cards.slice(0,3).map((c,i)=><CoachCard key={i} {...c}/>)}</div>
+      <div className="col" style={{flex:1}}>{cards.slice(3).map((c,i)=><CoachCard key={i} {...c}/>)}</div>
+    </div>
+  </div>;
+}
+function CoachCard({lbl,ic,color,body}){
+  return <div className="coach-card">
+    <div className="lbl" style={{color}}>{ic} {lbl}</div>
+    <div className="body">{body}</div>
+  </div>;
+}
+
+/* ---------- PREVIEW MODAL (smart add) ---------- */
+function PreviewModal({preview,onClose,onCommit}){
+  const {parsed,tpl}=preview;
+  const [t,setT]=useState({...parsed, clientImportance:3, growth:tpl?4:2, stress:2, estHours:tpl?5:1,
+    subs: tpl?tpl.subs:[]});
+  const s=priorityScore(t), stars=scoreToStars(s);
+  const set=(k,v)=>setT(p=>({...p,[k]:v}));
+  return <div className="overlay" onClick={onClose}>
+    <div className="modal glass" onClick={e=>e.stopPropagation()}>
+      <h3>✨ AI parsed your request</h3>
+      <div className="mh-sub">From "{preview.raw}" — review and add. {tpl&&`Auto-expanded into a ${tpl.subs.length}-step project.`}</div>
+
+      <div className="live-score">
+        <div className="big" style={{color:stars>=4?"var(--gold)":"var(--accent-2)"}}>{s}</div>
+        <div className="ld">
+          <div className="s1"><Stars n={stars}/> &nbsp;{STAR_LABEL[stars]} priority</div>
+          <div className="s2">Live AI score — adjust the inputs below and watch it recompute</div>
+        </div>
+      </div>
+
+      <div className="field"><label>Task</label><input value={t.title} onChange={e=>set("title",e.target.value)}/></div>
+      <div className="field-row">
+        <div className="field"><label>Category</label>
+          <select value={t.category} onChange={e=>set("category",e.target.value)}>
+            {CAT_KEYS.map(k=><option key={k} value={k}>{CATEGORIES[k].emoji} {CATEGORIES[k].label}</option>)}
+          </select>
+        </div>
+        <div className="field"><label>Deadline</label><input type="date" value={t.deadline||""} onChange={e=>set("deadline",e.target.value)}/></div>
+      </div>
+      <div className="field-row">
+        <div className="field"><label>Revenue impact ($)</label><input type="number" value={t.revenue} onChange={e=>set("revenue",+e.target.value)}/></div>
+        <div className="field"><label>Est. hours</label><input type="number" step="0.5" value={t.estHours} onChange={e=>set("estHours",+e.target.value)}/></div>
+      </div>
+      <div className="field"><label>Client importance <span className="slider-val">{t.clientImportance}/5</span></label><input type="range" min="1" max="5" value={t.clientImportance} onChange={e=>set("clientImportance",+e.target.value)}/></div>
+      <div className="field"><label>Business growth <span className="slider-val">{t.growth}/5</span></label><input type="range" min="1" max="5" value={t.growth} onChange={e=>set("growth",+e.target.value)}/></div>
+      <div className="field"><label>Stress relief if done <span className="slider-val">{t.stress}/5</span></label><input type="range" min="1" max="5" value={t.stress} onChange={e=>set("stress",+e.target.value)}/></div>
+
+      {tpl && <div className="field"><label>Auto-generated steps ({tpl.subs.length})</label>
+        <div style={{maxHeight:120,overflowY:"auto",fontSize:13,color:"var(--txt-dim)",lineHeight:1.7,paddingLeft:4}}>
+          {tpl.subs.map((s,i)=><div key={i}>· {s}</div>)}
+        </div>
+      </div>}
+
+      <div className="modal-foot">
+        <button className="btn" onClick={onClose}>Cancel</button>
+        <button className="btn primary" onClick={()=>onCommit(t)}>Add to COO</button>
+      </div>
+    </div>
+  </div>;
+}
+
+/* ---------- EDIT MODAL ---------- */
+function EditModal({task,onClose,onSave,onDelete}){
+  const [t,setT]=useState({...task});
+  const s=priorityScore(t), stars=scoreToStars(s);
+  const set=(k,v)=>setT(p=>({...p,[k]:v}));
+  return <div className="overlay" onClick={onClose}>
+    <div className="modal glass" onClick={e=>e.stopPropagation()}>
+      <h3>Edit task</h3>
+      <div className="mh-sub">Tune the inputs — the AI priority recomputes live.</div>
+      <div className="live-score">
+        <div className="big" style={{color:stars>=4?"var(--gold)":"var(--accent-2)"}}>{s}</div>
+        <div className="ld"><div className="s1"><Stars n={stars}/> &nbsp;{STAR_LABEL[stars]} priority</div>
+        <div className="s2">{daysUntil(t.deadline)!==null?(daysUntil(t.deadline)<0?`${-daysUntil(t.deadline)} days overdue`:`Due in ${daysUntil(t.deadline)} days`):"No deadline set"}</div></div>
+      </div>
+      <div className="field"><label>Task</label><input value={t.title} onChange={e=>set("title",e.target.value)}/></div>
+      <div className="field-row">
+        <div className="field"><label>Category</label>
+          <select value={t.category} onChange={e=>set("category",e.target.value)}>
+            {CAT_KEYS.map(k=><option key={k} value={k}>{CATEGORIES[k].emoji} {CATEGORIES[k].label}</option>)}
+          </select></div>
+        <div className="field"><label>Deadline</label><input type="date" value={t.deadline||""} onChange={e=>set("deadline",e.target.value||null)}/></div>
+      </div>
+      <div className="field-row">
+        <div className="field"><label>Revenue ($)</label><input type="number" value={t.revenue} onChange={e=>set("revenue",+e.target.value)}/></div>
+        <div className="field"><label>Est. hours</label><input type="number" step="0.5" value={t.estHours} onChange={e=>set("estHours",+e.target.value)}/></div>
+      </div>
+      <div className="field"><label>Client importance <span className="slider-val">{t.clientImportance}/5</span></label><input type="range" min="1" max="5" value={t.clientImportance} onChange={e=>set("clientImportance",+e.target.value)}/></div>
+      <div className="field"><label>Business growth <span className="slider-val">{t.growth}/5</span></label><input type="range" min="1" max="5" value={t.growth} onChange={e=>set("growth",+e.target.value)}/></div>
+      {t.subs&&t.subs.length>0 && <div className="field"><label>Project steps</label>
+        <div style={{fontSize:13,color:"var(--txt-dim)",lineHeight:1.7}}>{t.subs.map((x,i)=><div key={i}>{x.d?"✓":"○"} {x.t}</div>)}</div></div>}
+      <div className="modal-foot">
+        <button className="btn danger left" onClick={()=>onDelete(t.id)}>Delete</button>
+        <button className="btn" onClick={onClose}>Cancel</button>
+        <button className="btn primary" onClick={()=>onSave(t)}>Save</button>
+      </div>
+    </div>
+  </div>;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+<script>
+  (function(){
+    try{
+      var code = document.getElementById('appcode').textContent;
+      var out = Babel.transform(code, {presets:[['react',{runtime:'classic'}]]}).code;
+      (0,eval)(out);
+    }catch(e){
+      var r=document.getElementById('root');
+      if(r) r.innerHTML='<pre style="color:#ff6b6b;padding:20px;font-size:13px;white-space:pre-wrap">BUILD ERROR: '+(e.message||'')+'\n\n'+((e.stack||'').split('\n').slice(0,5).join('\n'))+'</pre>';
+    }
+  })();
+</script>
+</body>
+</html>
