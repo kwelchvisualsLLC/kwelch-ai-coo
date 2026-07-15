@@ -1,0 +1,2260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+<title>KWelch · AI COO</title>
+<!-- Phone-app (PWA) setup: lets "Add to Home Screen" launch fullscreen with an icon -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="KWelch COO" />
+<meta name="theme-color" content="#0a0a0a" />
+<link rel="apple-touch-icon" href="kwcoo-icon-180.png" />
+<link rel="manifest" href="kwcoo.webmanifest" />
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  :root{
+    /* VisualBook palette — black + gold */
+    --bg:#0a0a0a;
+    --bg2:#0d0d0d;
+    --panel:#141414;
+    --panel-2:#1c1c1c;
+    --border:#2a2a2a;
+    --border-2:rgba(201,168,76,0.45);
+    --txt:#ffffff;
+    --txt-dim:#888888;
+    --txt-faint:#5a5a5a;
+    --accent:#C9A84C;
+    --accent-2:#e0a030;
+    --gold:#C9A84C;
+    --green:#4caf78;
+    --red:#e25555;
+    --orange:#e0a030;
+    --radius:14px;
+    --shadow:0 18px 50px -24px rgba(0,0,0,0.8);
+  }
+  *{box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+  html,body{margin:0;height:100%;}
+  body{
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    background:
+      radial-gradient(1100px 600px at 10% -12%, rgba(201,168,76,0.07), transparent 55%),
+      var(--bg);
+    color:var(--txt);
+    overflow:hidden;
+  }
+  ::selection{background:var(--gold);color:#0a0a0a;}
+  #root{height:100dvh;}
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:20px;border:2px solid transparent;background-clip:padding-box;}
+  ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.16);background-clip:padding-box;}
+
+  .app{display:flex;height:100dvh;}
+  .glass{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+  }
+
+  /* sidebar */
+  .sidebar{
+    width:248px;flex-shrink:0;padding:calc(22px + env(safe-area-inset-top)) 16px 22px;display:flex;flex-direction:column;gap:6px;
+    border-right:1px solid var(--border);background:rgba(255,255,255,0.02);backdrop-filter:blur(20px);
+  }
+  .brand{padding:8px 12px 22px;}
+  .wordmark{font-size:19px;font-weight:900;letter-spacing:3px;color:var(--txt);line-height:1;}
+  .wordmark span{color:var(--gold);}
+  .brand-sub{margin-top:5px;font-size:9px;color:var(--txt-dim);letter-spacing:3px;font-weight:600;}
+  .nav-item{
+    display:flex;align-items:center;gap:12px;padding:11px 13px;border-radius:13px;cursor:pointer;
+    color:var(--txt-dim);font-size:12.5px;font-weight:600;letter-spacing:.9px;text-transform:uppercase;transition:all .18s ease;border:1px solid transparent;
+  }
+  .nav-item .ico{width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .nav-item:hover{background:var(--panel);color:var(--txt);}
+  .nav-item.active{background:rgba(201,168,76,0.10);color:var(--gold);border-color:var(--border-2);}
+  .nav-badge{margin-left:auto;font-size:11px;background:var(--gold);color:#0a0a0a;border-radius:20px;padding:1px 8px;font-weight:700;}
+  .nav-badge.red{background:var(--red);}
+  .side-foot{margin-top:auto;}
+  .level-card{padding:13px;border-radius:15px;background:var(--panel);border:1px solid var(--border);}
+  .level-card .lvl{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:13px;color:var(--txt-dim);}
+  .level-card .lvl b{color:var(--gold);font-size:15px;}
+  .xpbar{height:7px;border-radius:10px;background:rgba(255,255,255,0.08);margin-top:9px;overflow:hidden;}
+  .xpbar i{display:block;height:100%;border-radius:10px;background:linear-gradient(90deg,var(--gold),var(--orange));transition:width .6s cubic-bezier(.2,.8,.2,1);}
+  .streak{display:flex;align-items:center;gap:7px;margin-top:11px;font-size:12.5px;color:var(--txt-dim);}
+
+  /* main */
+  .main{flex:1;display:flex;flex-direction:column;min-width:0;}
+  .topbar{padding:calc(18px + env(safe-area-inset-top)) 30px 14px;display:flex;align-items:center;gap:16px;}
+  .greet h2{margin:0;font-size:21px;font-weight:700;letter-spacing:-.3px;}
+  .greet p{margin:3px 0 0;font-size:13px;color:var(--txt-dim);}
+  .cmd{flex:1;max-width:560px;margin-left:auto;position:relative;}
+  .cmd input{
+    width:100%;padding:13px 16px 13px 44px;border-radius:10px;border:1px solid var(--border);
+    background:var(--panel);color:var(--txt);font-size:14px;outline:none;transition:.2s;
+  }
+  .cmd input:focus{border-color:var(--accent);background:rgba(201,168,76,0.08);box-shadow:0 0 0 4px rgba(201,168,76,0.12);}
+  .cmd input::placeholder{color:var(--txt-faint);}
+  .cmd .ai-ico{position:absolute;left:15px;top:50%;transform:translateY(-50%);font-size:16px;}
+  .cmd-hint{position:absolute;right:13px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--txt-faint);
+    border:1px solid var(--border);border-radius:7px;padding:2px 7px;}
+  .content{flex:1;overflow-y:auto;padding:8px 30px 40px;}
+
+  /* generic */
+  .row{display:flex;gap:18px;}
+  .col{display:flex;flex-direction:column;gap:18px;}
+  .card{padding:20px;border-radius:var(--radius);}
+  .card-h{display:flex;align-items:center;gap:9px;margin-bottom:15px;}
+  .card-h h3{margin:0;font-size:15px;font-weight:650;letter-spacing:-.2px;}
+  .card-h .sub{margin-left:auto;font-size:10px;color:var(--txt-faint);text-transform:uppercase;letter-spacing:1px;font-weight:600;}
+  .pill{font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;padding:3px 9px;border-radius:20px;background:var(--panel-2);color:var(--txt-dim);border:1px solid var(--border);}
+
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:18px;}
+  .stat{padding:18px;border-radius:14px;position:relative;overflow:hidden;}
+  .stat .lab{font-size:10.5px;color:var(--txt-dim);font-weight:700;text-transform:uppercase;letter-spacing:1.4px;}
+  .stat .val{font-size:28px;font-weight:760;letter-spacing:-1px;margin-top:6px;}
+  .stat .delta{font-size:10px;margin-top:5px;text-transform:uppercase;letter-spacing:.8px;font-weight:600;}
+  .stat .ring{position:absolute;right:14px;top:14px;}
+  .up{color:var(--green);} .down{color:var(--red);}
+
+  .gauge{transform:rotate(-90deg);}
+  .gauge circle{fill:none;stroke-width:7;stroke-linecap:round;}
+  .gauge .bg{stroke:rgba(255,255,255,0.08);}
+
+  /* task list */
+  .tlist{display:flex;flex-direction:column;gap:9px;}
+  .task{
+    display:flex;align-items:flex-start;gap:13px;padding:13px 14px;border-radius:15px;
+    background:var(--panel);border:1px solid var(--border);transition:.16s;cursor:pointer;
+  }
+  .task:hover{background:var(--panel-2);border-color:var(--border-2);transform:translateY(-1px);}
+  .task.done{opacity:.5;}
+  .task.done .t-title{text-decoration:line-through;}
+  .check{
+    width:21px;height:21px;border-radius:7px;border:2px solid var(--border-2);flex-shrink:0;margin-top:1px;
+    display:grid;place-items:center;transition:.16s;font-size:12px;color:transparent;
+  }
+  .task:hover .check{border-color:var(--accent);}
+  .check.on{background:linear-gradient(135deg,var(--green),#3f9968);border-color:transparent;color:#06281d;}
+  .t-body{flex:1;min-width:0;}
+  .t-title{font-size:14px;font-weight:550;line-height:1.35;}
+  .t-meta{display:flex;align-items:center;gap:9px;margin-top:6px;flex-wrap:wrap;}
+  .chip{font-size:11px;color:var(--txt-dim);display:inline-flex;align-items:center;gap:4px;}
+  .chip.cat{background:var(--panel-2);padding:2px 8px;border-radius:20px;border:1px solid var(--border);text-transform:uppercase;letter-spacing:.7px;font-size:9.5px;font-weight:600;}
+  .stars{color:var(--gold);font-size:12px;letter-spacing:1px;flex-shrink:0;}
+  .stars .off{color:rgba(255,255,255,0.13);}
+  .due-soon{color:var(--orange);} .overdue{color:var(--red);font-weight:600;}
+  .t-side{display:flex;flex-direction:column;align-items:flex-end;gap:5px;}
+  .pscore{font-size:11px;color:var(--txt-faint);font-variant-numeric:tabular-nums;}
+
+  .sub-row{margin-left:34px;display:flex;align-items:center;gap:9px;padding:6px 0;font-size:13px;color:var(--txt-dim);}
+  .sub-check{width:16px;height:16px;border-radius:5px;border:1.5px solid var(--border-2);display:grid;place-items:center;cursor:pointer;font-size:10px;color:transparent;flex-shrink:0;}
+  .sub-check.on{background:var(--green);border-color:transparent;color:#06281d;}
+  .sub-row.done span{text-decoration:line-through;opacity:.55;}
+
+  /* suggestion */
+  .sugg{display:flex;gap:12px;padding:13px;border-radius:14px;background:linear-gradient(135deg,rgba(201,168,76,0.1),rgba(224,160,48,0.05));border:1px solid var(--border);margin-bottom:9px;}
+  .sugg .ic{font-size:18px;}
+  .sugg .txt{flex:1;font-size:13px;line-height:1.4;color:var(--txt);}
+  .sugg .txt b{color:#fff;}
+  .sugg .act{font-size:10px;color:var(--gold);font-weight:700;letter-spacing:.7px;text-transform:uppercase;cursor:pointer;white-space:nowrap;align-self:center;padding:6px 11px;border-radius:9px;border:1px solid var(--border);transition:.15s;}
+  .sugg .act:hover{background:var(--panel-2);}
+
+  /* planner */
+  .timeline{position:relative;padding-left:8px;}
+  .tblock{display:flex;gap:15px;padding:4px 0;}
+  .tblock .time{width:62px;flex-shrink:0;font-size:12.5px;color:var(--txt-faint);text-align:right;padding-top:13px;font-variant-numeric:tabular-nums;}
+  .tblock .bar{width:4px;border-radius:4px;flex-shrink:0;margin:6px 0;}
+  .tblock .blk{flex:1;padding:12px 15px;border-radius:13px;background:var(--panel);border:1px solid var(--border);margin-bottom:2px;}
+  .tblock .blk .bt{font-size:13.5px;font-weight:550;}
+  .tblock .blk .bm{font-size:11.5px;color:var(--txt-faint);margin-top:3px;}
+
+  /* revenue */
+  .rev-op{padding:15px;border-radius:15px;background:var(--panel);border:1px solid var(--border);margin-bottom:10px;}
+  .rev-op .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+  .rev-op .name{font-size:14px;font-weight:600;}
+  .rev-op .val{font-size:15px;font-weight:700;color:var(--green);white-space:nowrap;}
+  .rev-op .desc{font-size:12.5px;color:var(--txt-dim);margin-top:5px;line-height:1.4;}
+  .rev-op .foot{display:flex;align-items:center;gap:8px;margin-top:11px;}
+  .stage{font-size:9.5px;padding:3px 9px;border-radius:20px;font-weight:700;letter-spacing:1px;}
+  .stage.lead{background:rgba(201,168,76,0.18);color:#b9a6ff;}
+  .stage.contacted{background:rgba(224,160,48,0.16);color:var(--orange);}
+  .stage.proposal{background:rgba(224,160,48,0.15);color:var(--accent-2);}
+  .stage.won{background:rgba(76,175,120,0.16);color:var(--green);}
+  .mini-btn{font-size:10px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--txt-dim);cursor:pointer;padding:5px 10px;border-radius:8px;border:1px solid var(--border);transition:.15s;}
+  .mini-btn:hover{color:#fff;border-color:var(--border-2);background:var(--panel-2);}
+
+  /* coach */
+  .coach-card{padding:17px;border-radius:16px;border:1px solid var(--border);margin-bottom:12px;background:var(--panel);}
+  .coach-card .lbl{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:7px;}
+  .coach-card .body{font-size:13.5px;line-height:1.5;color:var(--txt);}
+
+  /* modal */
+  .overlay{position:fixed;inset:0;background:rgba(5,6,12,0.62);backdrop-filter:blur(6px);display:grid;place-items:center;z-index:50;animation:fade .2s;}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+  @keyframes pop{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+  .modal{width:560px;max-width:92vw;max-height:88vh;overflow-y:auto;padding:26px;animation:pop .24s cubic-bezier(.2,.8,.2,1);}
+  .modal h3{margin:0 0 4px;font-size:19px;}
+  .modal .mh-sub{font-size:13px;color:var(--txt-dim);margin-bottom:20px;}
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:10.5px;color:var(--txt-dim);margin-bottom:7px;font-weight:700;text-transform:uppercase;letter-spacing:1px;}
+  .field input,.field select,.field textarea{
+    width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--border);
+    background:var(--panel-2);color:var(--txt);font-size:14px;outline:none;font-family:inherit;
+  }
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);}
+  .field-row{display:flex;gap:12px;}
+  .field-row .field{flex:1;}
+  .slider-val{float:right;color:var(--accent-2);font-weight:700;}
+  input[type=range]{accent-color:var(--accent);}
+  .live-score{display:flex;align-items:center;gap:14px;padding:14px;border-radius:14px;background:linear-gradient(135deg,rgba(201,168,76,0.14),rgba(224,160,48,0.06));border:1px solid var(--border);margin:6px 0 20px;}
+  .live-score .big{font-size:30px;font-weight:780;letter-spacing:-1px;}
+  .live-score .ld{flex:1;}
+  .live-score .ld .s1{font-size:13px;font-weight:600;}
+  .live-score .ld .s2{font-size:12px;color:var(--txt-dim);margin-top:2px;}
+  .btn{padding:11px 18px;border-radius:10px;border:1px solid var(--border-2);background:var(--panel-2);color:var(--txt);font-size:13.5px;font-weight:700;letter-spacing:.3px;cursor:pointer;transition:.16s;}
+  .btn:hover{background:#242424;border-color:var(--gold);}
+  .btn.primary{background:var(--gold);border-color:transparent;color:#0a0a0a;}
+  .btn.primary:hover{background:var(--orange);filter:none;}
+  .btn.danger{color:var(--red);border-color:rgba(226,85,85,0.3);background:rgba(226,85,85,0.08);}
+  .modal-foot{display:flex;gap:10px;justify-content:flex-end;margin-top:8px;}
+  .modal-foot .left{margin-right:auto;}
+
+  /* toast */
+  .toast-wrap{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);z-index:99;display:flex;flex-direction:column;gap:10px;align-items:center;}
+  .toast{padding:13px 20px;border-radius:14px;background:#141414;border:1px solid var(--border-2);
+    font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:10px;animation:pop .3s;box-shadow:var(--shadow);white-space:nowrap;}
+  .toast .xp{color:var(--gold);}
+
+  .empty{text-align:center;padding:50px 20px;color:var(--txt-faint);}
+  .empty .e-ico{font-size:38px;opacity:.5;margin-bottom:12px;}
+  .seg{display:flex;gap:4px;padding:4px;border-radius:13px;background:var(--panel);border:1px solid var(--border);width:fit-content;margin-bottom:18px;}
+  .seg button{padding:7px 15px;border-radius:9px;border:none;background:transparent;color:var(--txt-dim);font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;cursor:pointer;transition:.15s;}
+  .seg button.active{background:var(--panel-2);color:#fff;}
+  .add-btn{padding:9px 15px;border-radius:10px;background:var(--gold);color:#0a0a0a;font-size:13px;font-weight:700;letter-spacing:.3px;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px;transition:.15s;}
+  .add-btn:hover{background:var(--orange);}
+  .add-btn:hover{filter:brightness(1.08);}
+  .health-bd{display:flex;flex-direction:column;gap:11px;}
+  .hb-row{display:flex;align-items:center;gap:11px;}
+  .hb-row .hl{font-size:10px;color:var(--txt-dim);width:130px;text-transform:uppercase;letter-spacing:.8px;font-weight:600;}
+  .hb-bar{flex:1;height:8px;border-radius:8px;background:rgba(255,255,255,0.07);overflow:hidden;}
+  .hb-bar i{display:block;height:100%;border-radius:8px;}
+  .hb-row .hv{font-size:12px;color:var(--txt);width:34px;text-align:right;font-variant-numeric:tabular-nums;}
+  .section-title{font-size:13px;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.6px;margin:6px 2px 12px;}
+
+  /* edits board */
+  .typebar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+  .type-pill{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:11px;background:var(--panel);border:1px solid var(--border);font-size:12px;font-weight:600;color:var(--txt-dim);cursor:pointer;transition:.15s;}
+  .type-pill:hover{border-color:var(--border-2);color:var(--txt);}
+  .type-pill.active{background:rgba(201,168,76,0.12);border-color:var(--border-2);color:#fff;}
+  .type-pill .n{font-variant-numeric:tabular-nums;font-weight:800;color:var(--gold);}
+  .board{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;align-items:start;}
+  .bcol{background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:15px;padding:13px;min-height:90px;}
+  .bcol-h{display:flex;align-items:center;gap:8px;margin-bottom:11px;font-size:10.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--txt-dim);}
+  .bcol-h .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .bcol-h .cnt{margin-left:auto;font-size:11px;background:var(--panel-2);border:1px solid var(--border);border-radius:20px;padding:1px 8px;color:var(--txt-dim);font-weight:700;}
+  .ecard{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:9px;transition:.15s;}
+  .ecard:hover{border-color:var(--border-2);}
+  .ecard .et{font-size:13.5px;font-weight:600;line-height:1.35;}
+  .ecard .em{display:flex;align-items:center;gap:7px;margin-top:8px;flex-wrap:wrap;}
+  .type-tag{font-size:9.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding:3px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:4px;}
+  .ecard .ef{display:flex;align-items:center;gap:6px;margin-top:11px;}
+  .stepbtn{font-size:15px;line-height:1;color:var(--txt-dim);cursor:pointer;padding:4px 8px;border-radius:8px;border:1px solid var(--border);background:var(--panel-2);transition:.15s;user-select:none;}
+  .stepbtn:hover{color:#fff;border-color:var(--border-2);}
+  .stepbtn.go:hover{color:var(--green);}
+  .stepbtn.x{margin-left:auto;}
+  .stepbtn.x:hover{color:var(--red);}
+
+  /* ===== upgraded editing + task layouts ===== */
+  .estrip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+  .estat{padding:13px 15px;border-radius:14px;background:var(--panel);border:1px solid var(--border);position:relative;overflow:hidden;}
+  .estat .l{font-size:9.5px;color:var(--txt-dim);font-weight:700;text-transform:uppercase;letter-spacing:1.2px;}
+  .estat .v{font-size:23px;font-weight:760;letter-spacing:-.5px;margin-top:5px;font-variant-numeric:tabular-nums;}
+  .estat .sub2{font-size:10px;color:var(--txt-faint);margin-top:3px;text-transform:uppercase;letter-spacing:.7px;font-weight:600;}
+  .estat.warn .v{color:var(--red);} .estat.good .v{color:var(--green);} .estat.gold .v{color:var(--gold);}
+  .estat .edge{position:absolute;left:0;top:0;bottom:0;width:3px;}
+
+  .elist{display:flex;flex-direction:column;gap:10px;}
+  .ecard2{display:flex;border-radius:15px;overflow:hidden;background:var(--panel);border:1px solid var(--border);transition:.16s;}
+  .ecard2:hover{border-color:var(--border-2);transform:translateY(-1px);}
+  .ecard2 .stripe{width:4px;flex-shrink:0;}
+  .ecard2 .ebody{flex:1;min-width:0;padding:13px 16px;}
+  .ecard2 .etop{display:flex;align-items:flex-start;gap:10px;}
+  .ecard2 .etitle{font-size:14.5px;font-weight:600;line-height:1.35;flex:1;min-width:0;}
+  .ecard2 .enote{font-size:11.5px;color:var(--txt-faint);margin-top:4px;line-height:1.4;}
+  .ecard2 .emeta{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  .stage-badge{font-size:9.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;padding:3px 9px;border-radius:20px;white-space:nowrap;}
+  .eprog{display:flex;align-items:center;gap:5px;margin-top:11px;}
+  .eprog .pd{width:20px;height:4px;border-radius:4px;background:rgba(255,255,255,0.09);transition:.2s;}
+  .eprog .plab{font-size:10px;color:var(--txt-faint);margin-left:5px;text-transform:uppercase;letter-spacing:.6px;font-weight:600;}
+  .eact{display:flex;align-items:center;gap:7px;margin-top:12px;flex-wrap:wrap;}
+  .ebtn{font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--txt-dim);cursor:pointer;padding:6px 12px;border-radius:9px;border:1px solid var(--border);background:var(--panel-2);transition:.15s;display:inline-flex;align-items:center;gap:5px;user-select:none;}
+  .ebtn:hover{color:#fff;border-color:var(--border-2);}
+  .ebtn.go{color:var(--gold);border-color:var(--border-2);}
+  .ebtn.go:hover{background:var(--gold);color:#0a0a0a;border-color:transparent;}
+  .ebtn.del{margin-left:auto;}
+  .ebtn.del:hover{color:var(--red);border-color:rgba(226,85,85,.4);background:rgba(226,85,85,0.08);}
+  .viewtog{display:flex;gap:3px;padding:4px;border-radius:11px;background:var(--panel);border:1px solid var(--border);}
+  .viewtog button{padding:6px 12px;border-radius:8px;border:none;background:transparent;color:var(--txt-dim);font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;cursor:pointer;transition:.15s;}
+  .viewtog button.active{background:var(--panel-2);color:#fff;}
+  @media (max-width:780px){ .estrip{grid-template-columns:1fr 1fr;} }
+
+  /* call backs */
+  .cb{display:flex;align-items:flex-start;gap:13px;padding:14px 15px;border-radius:15px;background:var(--panel);border:1px solid var(--border);margin-bottom:10px;transition:.15s;}
+  .cb:hover{border-color:var(--border-2);}
+  .cb.urgent{border-color:rgba(226,85,85,0.45);background:linear-gradient(135deg,rgba(226,85,85,0.07),transparent);}
+  .cb.done{opacity:.5;}
+  .cb-av{width:40px;height:40px;border-radius:12px;flex-shrink:0;display:grid;place-items:center;font-size:15px;font-weight:800;background:rgba(201,168,76,0.14);color:var(--gold);border:1px solid var(--border-2);}
+  .cb-b{flex:1;min-width:0;}
+  .cb-n{font-size:14.5px;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .cb-tel{font-size:13px;color:var(--gold);text-decoration:none;font-weight:600;}
+  .cb-tel:hover{text-decoration:underline;}
+  .cb-r{font-size:12.5px;color:var(--txt-dim);margin-top:4px;line-height:1.4;}
+  .cb-side{display:flex;flex-direction:column;gap:6px;align-items:flex-end;}
+  .urgent-flag{font-size:9px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--red);background:rgba(226,85,85,0.12);border:1px solid rgba(226,85,85,0.3);border-radius:20px;padding:2px 8px;}
+
+  /* responsive — keep it usable in any window size */
+  @media (max-width:1180px){
+    .stat-grid{grid-template-columns:repeat(2,1fr);}
+    .row{flex-direction:column;}
+    .col{flex:1 1 auto!important;}
+    .board{grid-template-columns:repeat(2,1fr);}
+  }
+  @media (max-width:780px){
+    .sidebar{width:208px;}
+    .content{padding:8px 18px 40px;}
+    .topbar{flex-wrap:wrap;padding:16px 18px 12px;}
+    .cmd{max-width:none;margin-left:0;flex-basis:100%;order:3;}
+    .stat-grid{grid-template-columns:1fr 1fr;gap:12px;}
+    .stat .val{font-size:24px;}
+  }
+  @media (max-width:560px){
+    html,body{height:auto;overflow:auto;-webkit-overflow-scrolling:touch;}
+    #root{height:auto;min-height:100dvh;}
+    .app{flex-direction:column;height:auto;min-height:100dvh;}
+    .main{flex:none;}
+    .content{flex:none;overflow:visible;padding-bottom:calc(40px + env(safe-area-inset-bottom));}
+    .sidebar{width:100%;flex-direction:row;flex-wrap:wrap;align-items:center;gap:4px;padding:calc(12px + env(safe-area-inset-top)) 14px 12px;border-right:none;border-bottom:1px solid var(--border);}
+    .topbar{padding:14px 18px 12px;}
+    .brand{width:100%;padding:0 4px 8px;}
+    .nav-item{padding:8px 11px;}
+    .nav-item span:not(.ico):not(.nav-badge){display:none;}
+    .side-foot{margin-left:auto;margin-top:0;}
+    .level-card{padding:8px 12px;}
+    .level-card .xpbar,.level-card .streak{display:none;}
+    .stat-grid{grid-template-columns:1fr 1fr;}
+    .board{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+window.addEventListener('error',function(e){
+  var r=document.getElementById('root');
+  if(r) r.innerHTML='<pre style="color:#ff6b6b;padding:20px;font-size:13px;white-space:pre-wrap">RUNTIME ERROR: '+(e.message||'')+'\n\n'+((e.error&&e.error.stack)||'')+'</pre>';
+});
+</script>
+<script id="appcode" type="text/plain">
+const {useState,useEffect,useMemo,useRef} = React;
+
+/* ============================ DOMAIN LOGIC ============================ */
+
+const CATEGORIES = {
+  shoot:    {emoji:"📸", label:"Client Shoots",      kw:["shoot","wedding","photoshoot","session","portrait","headshot","video","film","record","event","ceremony","reception"]},
+  editing:  {emoji:"✂️", label:"Editing",            kw:["edit","color grade","cull","export","render","retouch","cut","footage","gallery","deliver"]},
+  comms:    {emoji:"📧", label:"Client Comms",        kw:["email","reply","call","follow up","followup","message","respond","contract","quote","contact","reach out"]},
+  revenue:  {emoji:"💰", label:"Revenue",             kw:["invoice","upsell","pitch","proposal","retainer","sell","deal","lead","sponsor","partnership","payment","deposit"]},
+  content:  {emoji:"🎥", label:"Content Creation",     kw:["youtube","reel","short","content","script","film a","b-roll","vlog","tutorial"]},
+  social:   {emoji:"📱", label:"Social Media",         kw:["instagram","post","story","tiktok","caption","schedule post","social","ig "]},
+  network:  {emoji:"🤝", label:"Networking",           kw:["network","meet","coffee","chamber","intro","connect","referral"]},
+  website:  {emoji:"💻", label:"Website",              kw:["website","portfolio","seo","landing","web "]},
+  product:  {emoji:"🛍️", label:"Digital Products",     kw:["lut","preset","pack","course","template","digital product","gumroad","ebook"]},
+  accounting:{emoji:"🧾",label:"Accounting",          kw:["tax","bookkeep","quickbooks","expense","receipt","accounting","insurance"]},
+  travel:   {emoji:"🚘", label:"Travel",              kw:["drive","travel","napa","vacaville","trip","flight","airport","commute"]},
+  personal: {emoji:"🏋️", label:"Personal",            kw:["gym","workout","lunch","family","personal","rest","sleep"]},
+  learning: {emoji:"📚", label:"Learning",            kw:["learn","read","study","tutorial","watch","research","course "]},
+  growth:   {emoji:"🧠", label:"Business Growth",      kw:["strategy","plan","goal","grow","scale","brand","outreach","district","restaurant","gym client","real estate"]},
+  maint:    {emoji:"⚙️", label:"Maintenance",         kw:["clean","backup","firmware","update","calibrat","maintenance","sensor","battery","organize","archive","sd card"]},
+};
+const CAT_KEYS = Object.keys(CATEGORIES);
+
+/* ---- EDITS: types you categorize your edit jobs by, + the editing pipeline ---- */
+const EDIT_TYPES = {
+  wedding:    {emoji:"💍", label:"Wedding",          color:"#C9A84C"},
+  realestate: {emoji:"🏡", label:"Real Estate",      color:"#4caf78"},
+  restaurant: {emoji:"🍽️", label:"Restaurant",       color:"#e0a030"},
+  social:     {emoji:"📱", label:"Reel / Social",    color:"#22d3ee"},
+  school:     {emoji:"🎓", label:"School / District", color:"#8a9bff"},
+  corporate:  {emoji:"🏢", label:"Corporate",        color:"#b9a6ff"},
+  event:      {emoji:"🎤", label:"Event",            color:"#ff9f43"},
+  brand:      {emoji:"✨", label:"Brand / Promo",    color:"#e25555"},
+  portrait:   {emoji:"📸", label:"Portrait / Photo", color:"#5ad1c9"},
+  other:      {emoji:"🎬", label:"Other",            color:"#9a9a9a"},
+};
+const EDIT_TYPE_KEYS = Object.keys(EDIT_TYPES);
+// The pipeline an edit moves through. Advance with ▶, step back with ◀.
+const EDIT_STAGES = [
+  {k:"queued",    label:"To Edit",        color:"#888888"},
+  {k:"editing",   label:"Editing",        color:"#e0a030"},
+  {k:"review",    label:"Color / Review", color:"#8a9bff"},
+  {k:"delivered", label:"Delivered",      color:"#4caf78"},
+];
+
+function seedEdits(){ return [];
+  return [
+    {id:"se0", title:"Sarah & James — wedding film", type:"wedding",   stage:"editing",   deadline:todayISO(2), note:"Highlight reel + full ceremony", sample:true, created:Date.now()},
+    {id:"se1", title:"Vine & Barrel — promo reel",   type:"restaurant", stage:"queued",    deadline:todayISO(4), note:"3 verticals for IG", sample:true, created:Date.now()-1},
+    {id:"se2", title:"1420 Oak Ln — listing video",  type:"realestate", stage:"review",    deadline:todayISO(1), note:"HDR stills + walkthrough", sample:true, created:Date.now()-2},
+    {id:"se3", title:"VUSD — board meeting recap",   type:"school",     stage:"queued",    deadline:todayISO(6), note:"", sample:true, created:Date.now()-3},
+  ];
+}
+function seedCalls(){ return [];
+  return [
+    {id:"sc0", name:"Maria — Vine & Barrel", phone:"7075551042", reason:"Confirm shoot date + menu items to feature", urgent:true,  done:false, sample:true, created:Date.now()},
+    {id:"sc1", name:"Coach Daniels (VUSD)",  phone:"7075559871", reason:"Senior night highlight package pricing", urgent:false, done:false, sample:true, created:Date.now()-1},
+  ];
+}
+
+function categorize(text){
+  const t=text.toLowerCase();
+  let best="growth", bestHits=0;
+  for(const k of CAT_KEYS){
+    let hits=0;
+    for(const w of CATEGORIES[k].kw){ if(t.includes(w)) hits+= w.length>4?2:1; }
+    if(hits>bestHits){bestHits=hits;best=k;}
+  }
+  return best;
+}
+
+// Smart task expansion templates
+const TEMPLATES = {
+  wedding:["Confirm timeline & shot list with couple","Backup & format SD cards","Charge all batteries","Import & backup footage","Cull and select","Color grade highlights","Audio cleanup","Edit highlight reel","Cut Instagram teaser","Export 4K deliverables","Deliver online gallery","Request testimonial","Invoice remaining balance","Archive project"],
+  restaurant:["Scout location & lighting","Confirm menu items to feature","Prep gimbal & lenses","Shoot dishes (hero + detail)","Capture ambiance b-roll","Color grade for warmth","Edit 30s promo reel","Cut 3 vertical clips","Deliver files + usage license","Pitch monthly content retainer","Invoice"],
+  "real estate":["Confirm address & access","Shoot exteriors (golden hour)","Shoot interiors wide + detail","Capture drone aerials","Edit & HDR blend stills","Edit walkthrough video","Deliver MLS-ready gallery","Invoice agent"],
+  headshot:["Confirm wardrobe & vibe","Set up lighting & backdrop","Shoot session","Cull selects","Retouch finals","Deliver gallery","Request review","Invoice"],
+  brand:["Discovery call & moodboard","Pre-pro shot list","Shoot product/lifestyle","Edit photos","Edit hero video","Cut social cutdowns","Deliver assets","Pitch ongoing retainer","Invoice"],
+  youtube:["Pick topic & hook","Write script/outline","Film a-roll","Capture b-roll","Edit video","Design thumbnail","Write title + description","Schedule upload","Plan IG/Short repurpose"],
+  reel:["Choose hook & concept","Film clips","Edit + captions","Add trending audio","Write caption + hashtags","Schedule post"],
+  district:["Build target list of schools","Find decision-maker contacts","Personalize outreach email","Send proposal / partnership deck","Follow up (3-touch)","Book discovery call","Close retainer"],
+  product:["Define product & promise","Build the asset","Design cover & mockups","Write sales page copy","Set up Gumroad listing","Record promo reel","Launch to email list","Post launch content"],
+  lut:["Finalize LUT/preset files","Build before/after previews","Write product description","Upload to Gumroad","Create launch reel","Email list announcement","Post 3 promo clips"],
+};
+function expandTemplate(text){
+  const t=text.toLowerCase();
+  for(const key in TEMPLATES){ if(t.includes(key)) return {key, subs:TEMPLATES[key]}; }
+  // generic shoot fallback
+  if(/shoot|session|video|film/.test(t)) return {key:"shoot", subs:["Confirm details & timeline","Prep & charge gear","Backup SD cards","Shoot","Import & backup footage","Edit","Deliver","Invoice"]};
+  return null;
+}
+
+// Natural language date parsing
+const WEEKDAYS=["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];
+function parseDate(text){
+  const t=text.toLowerCase();
+  const now=new Date(); now.setHours(0,0,0,0);
+  const mk=(d)=>{const x=new Date(now);x.setDate(x.getDate()+d);return x;};
+  let m;
+  if(/\btoday|tonight\b/.test(t)) return {date:mk(0),m:t.match(/today|tonight/)[0]};
+  if(/\btomorrow\b/.test(t)) return {date:mk(1),m:"tomorrow"};
+  if((m=t.match(/in (\d+) days?/))) return {date:mk(parseInt(m[1])),m:m[0]};
+  if(/this weekend/.test(t)){ const dow=now.getDay(); return {date:mk((6-dow+7)%7||6),m:"this weekend"}; }
+  if(/end of (the )?week/.test(t)){ const dow=now.getDay(); return {date:mk((5-dow+7)%7||5),m:"end of week"}; }
+  for(let i=0;i<7;i++){
+    const re=new RegExp("(before |by |on |next |this )?"+WEEKDAYS[i]);
+    if((m=t.match(re))){
+      const dow=now.getDay(); let diff=(i-dow+7)%7;
+      if(diff===0) diff=7;
+      if(/next /.test(m[0])) diff+= (diff<=7?0:0); // next keeps next occurrence
+      return {date:mk(diff),m:m[0].trim()};
+    }
+  }
+  return null;
+}
+function parseRevenue(text){ const m=text.replace(/,/g,"").match(/\$\s?(\d+(\.\d+)?)\s?k?/i); if(!m) return 0; let v=parseFloat(m[1]); if(/k/i.test(m[0])) v*=1000; return Math.round(v); }
+
+function parseNaturalLanguage(raw){
+  let title=raw.trim();
+  const d=parseDate(raw);
+  const rev=parseRevenue(raw);
+  const cat=categorize(raw);
+  let deadline=null;
+  if(d){ deadline=d.date.toISOString().slice(0,10);
+    title=title.replace(new RegExp("\\b(before |by |on |next |this )?"+d.m+"\\b","i"),"").replace(/\s+/g," ").trim();
+  }
+  if(rev) title=title.replace(/\$\s?\d[\d,]*(\.\d+)?\s?k?/i,"").replace(/\s+/g," ").trim();
+  title=title.replace(/^(remind me to|i need to|please|can you|todo:?)\s+/i,"");
+  title=title.charAt(0).toUpperCase()+title.slice(1);
+  return {title, deadline, revenue:rev, category:cat};
+}
+
+// THE PRIORITY FORMULA
+function daysUntil(deadline){ if(!deadline) return null;
+  const a=new Date(deadline); a.setHours(0,0,0,0);
+  const b=new Date(); b.setHours(0,0,0,0);
+  return Math.round((a-b)/86400000);
+}
+function priorityScore(task){
+  // weights
+  const W={deadline:34, revenue:26, client:16, growth:10, stress:8, time:6};
+  const du=daysUntil(task.deadline);
+  let urgency;
+  if(du===null) urgency=0.18;
+  else if(du<0) urgency=1.0;
+  else if(du===0) urgency=0.95;
+  else if(du===1) urgency=0.82;
+  else if(du<=3) urgency=0.62;
+  else if(du<=7) urgency=0.42;
+  else if(du<=14) urgency=0.28;
+  else urgency=0.16;
+  const revN=Math.min(1,(task.revenue||0)/3000);
+  const client=(task.clientImportance||3)/5;
+  const growth=(task.growth||2)/5;
+  const stress=(task.stress||2)/5;
+  const timePen=Math.min(1,(task.estHours||1)/8);
+  let s = W.deadline*urgency + W.revenue*revN + W.client*client + W.growth*growth + W.stress*stress - W.time*timePen;
+  s=Math.max(0,Math.min(100,Math.round(s)));
+  return s;
+}
+function scoreToStars(s){ if(s>=78)return 5; if(s>=60)return 4; if(s>=42)return 3; if(s>=24)return 2; return 1; }
+const STAR_LABEL={5:"Critical",4:"High",3:"Medium",2:"Low",1:"Someday"};
+
+// Daily planner builder
+function buildPlanner(tasks){
+  const today=tasks.filter(t=>!t.done && (daysUntil(t.deadline)!==null && daysUntil(t.deadline)<=1 || priorityScore(t)>=55))
+    .sort((a,b)=>priorityScore(b)-priorityScore(a)).slice(0,7);
+  const blocks=[]; let cur=9*60; let lunched=false;
+  const DAY_END=19*60; // wind down by 7pm
+  const push=(title,mins,meta,color)=>{ blocks.push({time:cur,mins,title,meta,color}); cur+=mins; };
+  push("Morning reset · gym + coffee",90,"Energy first — your best edits happen after","#34e0a1");
+  let overflow=0;
+  for(const t of today){
+    if(!lunched && cur>=12*60){ push("Lunch break",45,"Step away from the screen","#ff9f43"); lunched=true; }
+    const mins=Math.max(30,Math.round((t.estHours||1)*60));
+    if(cur+mins>DAY_END){ overflow++; continue; } // day is full — rolls to tomorrow
+    const c=CATEGORIES[t.category];
+    push(t.title, mins, `${c.emoji} ${c.label} · ~${t.estHours||1}h`, "#7c5cff");
+    cur+=10; // buffer
+  }
+  if(!lunched){ push("Lunch break",45,"Step away from the screen","#ff9f43"); }
+  if(cur<=18*60) push("Post today's reel + check DMs",30,"Consistency compounds — don't skip","#22d3ee");
+  if(cur<=19*60) push("Invoices & inbox zero",30,"Close the financial loop daily","#ffcf5c");
+  if(overflow>0) push(`${overflow} more task${overflow>1?"s":""} → rolled to tomorrow`,0,"Your COO protected your day from overload","#646a80");
+  return blocks;
+}
+function fmtTime(min){ let h=Math.floor(min/60)%24, m=min%60; const ap=h>=12?"PM":"AM"; h=h%12||12; return `${h}:${m.toString().padStart(2,"0")} ${ap}`; }
+
+// AI suggestion engine — data driven
+function generateSuggestions(tasks, state){
+  const out=[];
+  const open=tasks.filter(t=>!t.done);
+  const overdue=open.filter(t=>{const d=daysUntil(t.deadline);return d!==null&&d<0;});
+  overdue.slice(0,2).forEach(t=>out.push({ic:"🚨",txt:`<b>${t.title}</b> is overdue. ${t.category==="revenue"?"Money on the table — chase it today.":"Knock it out or reschedule before it snowballs."}`,act:"Open",tid:t.id}));
+  const invoices=open.filter(t=>/invoice|payment|balance/i.test(t.title));
+  if(invoices.length) out.push({ic:"💸",txt:`You have <b>${invoices.length} unpaid invoice${invoices.length>1?"s":""}</b> in flight. Cash flow is king — send a friendly nudge.`,act:"Revenue",nav:"revenue"});
+  // posting recency
+  const lastPost=state.lastPostDate?daysUntil(state.lastPostDate)*-1:99;
+  if(lastPost>=3) out.push({ic:"📱",txt:`You haven't posted in <b>${lastPost===99?"a while":lastPost+" days"}</b>. The algorithm forgets fast — film a quick reel today.`,act:"Add task",add:"Film + post Instagram reel today"});
+  // revenue progress
+  const revToday=open.filter(t=>t.category==="revenue").reduce((s,t)=>s+(t.revenue||0),0);
+  if(revToday < state.dailyGoal) out.push({ic:"💰",txt:`Pipeline today is <b>$${revToday.toLocaleString()}</b> vs your $${state.dailyGoal.toLocaleString()} goal. Pitch 2 local restaurants or upsell a past client.`,act:"Revenue",nav:"revenue"});
+  // maintenance nudges (rotating)
+  const maint=["Back up this week's SD cards to two drives","Clean your camera sensor & lenses","Check for lens & camera firmware updates","Update your portfolio with a recent shoot","Email 3 school districts about storytelling retainer"];
+  out.push({ic:"🧠",txt:maint[new Date().getDate()%maint.length]+".",act:"Add task",add:maint[new Date().getDate()%maint.length]});
+  // someday / growth
+  if(open.filter(t=>t.category==="product").length===0) out.push({ic:"🛍️",txt:`No <b>digital product</b> tasks active. Your 170K audience is a build-once-sell-forever asset — relaunch the LUT pack.`,act:"Add task",add:"Launch Signature LUT Pack on Gumroad"});
+  return out.slice(0,5);
+}
+
+/* ============================ SEED DATA ============================ */
+const todayISO=(o=0)=>{const d=new Date();d.setDate(d.getDate()+o);return d.toISOString().slice(0,10);};
+// SAMPLE data — clearly tagged sample:true. Each item disappears the moment
+// you add your OWN task/opportunity to that same category.
+function seedTasks(){ return [];
+  const base=[
+    {title:"Edit Sarah & James wedding highlight reel", category:"editing", deadline:todayISO(1), revenue:0, clientImportance:5, growth:2, stress:4, estHours:5, done:false, subs:[]},
+    {title:"Napa winery brand shoot", category:"shoot", deadline:todayISO(0), revenue:1800, clientImportance:5, growth:3, stress:3, estHours:4, done:false, subs:[]},
+    {title:"Send invoice — Thompson family session balance", category:"revenue", deadline:todayISO(-2), revenue:650, clientImportance:4, growth:1, stress:2, estHours:0.5, done:false, subs:[]},
+    {title:"Film + post Instagram reel", category:"social", deadline:todayISO(0), revenue:0, clientImportance:2, growth:4, stress:1, estHours:1, done:false, subs:[]},
+    {title:"Back up last week's SD cards", category:"maint", deadline:todayISO(1), revenue:0, clientImportance:1, growth:1, stress:3, estHours:0.5, done:false, subs:[]},
+    {title:"Email 5 school districts — storytelling partnership", category:"growth", deadline:todayISO(4), revenue:5000, clientImportance:4, growth:5, stress:2, estHours:1.5, done:false, subs:[]},
+  ];
+  return base.map((t,i)=>({...t, id:"seed"+i, sample:true, created:Date.now()-i*1000}));
+}
+function seedRevenue(){ return [];
+  return [
+    {id:"r1", name:"Fairfield-Suisun School District", value:18000, desc:"Annual storytelling retainer — district-wide event & promo coverage.", stage:"proposal", sample:true},
+    {id:"r2", name:"3x Vacaville restaurants", value:7200, desc:"Monthly social content packages @ $800/mo each.", stage:"lead", sample:true},
+    {id:"r3", name:"Signature LUT Pack relaunch", value:4000, desc:"170K audience × digital product. Passive, build-once.", stage:"lead", sample:true},
+  ];
+}
+
+/* ============================ APP ============================ */
+const DEFAULT_STATE={dailyGoal:500, monthlyGoal:30000, level:1, xp:0, xpMax:300, streak:0, lastPostDate:null};
+
+function load(key,fallback){ try{const v=localStorage.getItem(key);return v?JSON.parse(v):fallback;}catch{return fallback;} }
+
+// Bookings created in VisualBook (same origin) drop entries in "kw_edit_inbox".
+// Drain them into the Edits board, deduped by bookingId, then clear the inbox.
+function drainEditInbox(setEdits){
+  let inbox=[];
+  try{ inbox=JSON.parse(localStorage.getItem("kw_edit_inbox")||"[]"); }catch{ inbox=[]; }
+  if(!Array.isArray(inbox)||!inbox.length) return;
+  setEdits(prev=>{
+    const have=new Set(prev.map(e=>e.bookingId).filter(Boolean));
+    const add=inbox
+      .filter(x=>x&&x.bookingId&&!have.has(x.bookingId))
+      .map(x=>({id:x.id||("vb"+x.bookingId), title:x.title||"New shoot edit", type:x.type||"other",
+                stage:x.stage||"queued", deadline:x.deadline||null, note:x.note||"",
+                bookingId:x.bookingId, created:x.created||Date.now()}));
+    if(!add.length) return prev;
+    return [...add, ...prev.filter(x=>!x.sample)];   // real edits replace the samples
+  });
+  try{ localStorage.removeItem("kw_edit_inbox"); }catch{ /* */ }
+}
+
+// ---- cloud sync (same backend as VisualBook; isolated /api/coo endpoint) ----
+const COO_API="https://kwelch-outreach-hub.onrender.com/api/coo";
+const COO_KEY="vbk_9f3a1c7e8b2d4f60a5e1c9d3b7f2a4e8c6109d52";
+const COO_KEYS=["kw_tasks_v2","kw_rev_v2","kw_edits_v1","kw_calls_v1","kw_state_v2"];
+function cooTimeout(p,ms){ return Promise.race([p,new Promise((_,r)=>setTimeout(()=>r(new Error("timeout")),ms))]); }
+async function cooPull(){ const res=await cooTimeout(fetch(COO_API,{headers:{"x-vb-key":COO_KEY}}),70000); if(!res.ok) throw new Error("pull "+res.status); return res.json(); }
+async function cooPush(key,value){ const res=await cooTimeout(fetch(COO_API,{method:"POST",headers:{"content-type":"application/json","x-vb-key":COO_KEY},body:JSON.stringify({key,value})}),70000); if(!res.ok) throw new Error("push "+res.status); }
+function cooMeaningful(v){ return Array.isArray(v) ? v.some(x=>!x||!x.sample) : (v && typeof v==="object" && Object.keys(v).length>0); }
+// The shared backend allowlists keys (it 400s unknown ones). kw_edit_inbox IS an
+// accepted key and is otherwise unused, so we repurpose it as the cross-device store
+// for VisualBook data. Value shape: { b:[bookings], c:[clients], _vb:true }.
+// Old app versions read it as an array, see a non-array, and safely ignore it.
+const VB_SYNC_KEY="kw_edit_inbox";
+// Bump this token to force a fresh, one-time full reset on every device's next open.
+const RESET_TOKEN="reset-2026-07-13-full";
+async function cooPushSafe(key,value){ try{ await cooPush(key,value); return true; }catch(e){ return false; } }
+// Clear a device + the cloud to empty for every collection. Used by the one-time
+// auto-reset and the "Reset all data" button.
+async function cooResetAll(){
+  const empties={ kw_tasks_v2:[], kw_rev_v2:[], kw_edits_v1:[], kw_calls_v1:[], kw_edit_inbox:{b:[],c:[],_vb:true} };
+  try{ for(const [k,v] of Object.entries(empties)) await cooPush(k,v); await cooPush("kw_state_v2",DEFAULT_STATE); }catch(e){}
+  try{
+    for(const k of Object.keys(empties)) localStorage.setItem(k, JSON.stringify(empties[k]==="[]"?[]:empties[k]));
+    ["kw_tasks_v2","kw_rev_v2","kw_edits_v1","kw_calls_v1"].forEach(k=>localStorage.setItem(k,"[]"));
+    localStorage.setItem("kw_state_v2",JSON.stringify(DEFAULT_STATE));
+  }catch(e){}
+}
+
+// ---- VisualBook bridge (same-origin): read bookings & clients, feed the Edit pipeline ----
+function vbBalance(b){ const total=Number(b.totalPrice)||0; const dep=b.depositStatus==="yes"?total:(Number(b.depositAmount)||0); return Math.max(0,total-dep); }
+function vbPaid(b){ return (Number(b.totalPrice)||0)>0 && vbBalance(b)<=0; }
+function vbDepositPaid(b){ return b.depositStatus==="yes"||(Number(b.depositAmount)||0)>0; }
+
+/* ---------- Smart Booking (ported from VisualBook so this is ONE app) ---------- */
+const SHOOT_TYPES=["Wedding","Corporate Event","School/District","Government/Municipal","Music Video","Brand/Commercial","Real Estate","Portrait/Headshots","Sports","Birthday/Party","Visibility Vault Retainer","Other"];
+const VB_DELIVERABLES={
+  "Wedding":["Cinematic highlight film (3–5 min)","Full ceremony edit","Edited photo gallery (300+)","Drone aerials","Social teaser reel"],
+  "Corporate Event":["Event recap video (60–90s)","Edited photo gallery","Speaker/keynote clips","Vertical social cutdowns"],
+  "School/District":["Event coverage video","Edited photo gallery","30–60s promo reel","Social-ready vertical clips"],
+  "Government/Municipal":["Event documentation video","PSA / promo video","Edited photo archive","Social cutdowns"],
+  "Music Video":["Cinematic music video","Behind-the-scenes clip","Vertical social cuts (3)","Color-graded master"],
+  "Brand/Commercial":["Brand film (30–60s)","Product / lifestyle photos","Social ad cutdowns (3)","Raw selects"],
+  "Real Estate":["HDR property photos (25–40)","Cinematic walkthrough video","Drone aerials","Vertical listing reel"],
+  "Portrait/Headshots":["Retouched headshots (5–10)","Full edited gallery","Social crop versions"],
+  "Sports":["Game/action photo gallery","Highlight hype reel","Vertical social clips"],
+  "Birthday/Party":["Event recap video","Edited photo gallery","Social clips (2–3)"],
+  "Visibility Vault Retainer":["Monthly content shoot","20+ edited photos","4 reels / shorts","Posting-ready captioned assets"],
+  "Other":["Edited photo gallery","Edited highlight video"]};
+const deliverablesFor=(t)=>(VB_DELIVERABLES[t]||VB_DELIVERABLES.Other).slice();
+const PAYMENT_METHODS=["Zelle","Venmo","Cash App","Cash","Card","Check","Bank Transfer (ACH)","PayPal","Other"];
+const vbUid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+function emptyVbBooking(){ return {id:vbUid(),clientId:vbUid(),clientName:"",email:"",phone:"",instagram:"",shootType:"",date:"",startTime:"",endTime:"",hours:0,miles:0,location:"",totalPrice:0,depositStatus:"no",depositAmount:0,paymentMethod:"",deliverables:[],notes:"",createdAt:Date.now()}; }
+
+// VisualBook's own cloud channel — keep it in step so that app (and any device
+// still opening it) always shows the same bookings/clients. Fire-and-forget,
+// never pushes an empty list (server guard also blocks that).
+const VB_API="https://kwelch-outreach-hub.onrender.com/api/visualbook";
+function vbCloudPush(key,value){ try{ if(!Array.isArray(value)||!value.length) return; fetch(VB_API,{method:"POST",headers:{"content-type":"application/json","x-vb-key":COO_KEY},body:JSON.stringify({key,value})}).catch(()=>{}); }catch(e){} }
+
+// Paste any text ("Sarah wedding at Vine & Barrel june 5 $1500, $500 deposit,
+// 707-555-1042, sarah@x.com") → prefilled booking fields. All editable after.
+function parseSmartBooking(text){
+  const t=" "+String(text||"").trim()+" ", out={};
+  const em=t.match(/[\w.+-]+@[\w-]+\.[\w.]{2,}/); if(em) out.email=em[0];
+  const ph=t.match(/(\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/); if(ph) out.phone=ph[0].trim();
+  const ig=t.match(/(?:^|[\s(])@([A-Za-z0-9_.]{2,30})/); if(ig) out.instagram="@"+ig[1];
+  const prices=[...t.matchAll(/\$\s?([\d,]+(?:\.\d{1,2})?)/g)].map(m=>Number(m[1].replace(/,/g,""))).filter(n=>n>0);
+  if(prices.length){ out.totalPrice=Math.max(...prices);
+    if(prices.length>1){ out.depositAmount=Math.min(...prices); out.depositStatus="partial"; } }
+  if(/paid in full|fully paid/i.test(t)) out.depositStatus="yes";
+  else if(/no deposit|nothing paid|unpaid/i.test(t)) out.depositStatus="no";
+  const iso=t.match(/\d{4}-\d{2}-\d{2}/);
+  const md=t.match(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+(\d{1,2})(?:,?\s*(\d{4}))?/i);
+  if(iso) out.date=iso[0];
+  else if(md){ const y=md[3]||String(new Date().getFullYear()); const d=new Date(`${md[1]} ${md[2]}, ${y}`);
+    if(!isNaN(d)){ if(!md[3]&&d<new Date()) d.setFullYear(d.getFullYear()+1); out.date=d.toISOString().slice(0,10); } }
+  const tm=t.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)/i);
+  if(tm){ let h=Number(tm[1])%12; if(/pm/i.test(tm[3])) h+=12; out.startTime=String(h).padStart(2,"0")+":"+(tm[2]||"00"); }
+  const hrs=t.match(/(\d+(?:\.\d+)?)\s*(?:hours?|hrs?)\b/i);
+  if(hrs) out.hours=Number(hrs[1]);
+  if(out.startTime&&out.hours>0){ const [H,M]=out.startTime.split(":").map(Number); const tot=(H*60+M+Math.round(out.hours*60))%1440; out.endTime=String(Math.floor(tot/60)).padStart(2,"0")+":"+String(tot%60).padStart(2,"0"); }
+  const st=SHOOT_TYPES.find(s=>t.toLowerCase().includes(s.toLowerCase().split(/[\/ ]/)[0]));
+  if(st) out.shootType=st; else if(/school|district/i.test(t)) out.shootType="School/District";
+  if(out.shootType) out.deliverables=deliverablesFor(out.shootType);
+  const nm=t.match(/(?:for|with|client[:\s])\s*([A-Z][A-Za-z'&.-]*(?:\s+(?:and|&|of|the)\s+[A-Z][A-Za-z'&.-]*|\s+[A-Z][A-Za-z'&.-]*){0,4})/);
+  if(nm) out.clientName=nm[1].trim();
+  else { const cap=t.match(/\b([A-Z][a-z]+\s+[A-Z][a-z]+)\b/); if(cap) out.clientName=cap[1]; }
+  const loc=t.match(/\b(?:at|in)\s+([A-Z][A-Za-z0-9'&. -]{3,40}?)(?=[,.;]|\s+on\s|\s+\$|\s*$)/);
+  if(loc&&loc[1].trim()!==out.clientName) out.location=loc[1].trim();
+  return out;
+}
+
+/* ---------- Invoices & Quotes (ported from VisualBook) ---------- */
+const vbMoney=n=>"$"+(Number(n)||0).toLocaleString("en-US",{maximumFractionDigits:2});
+function vbFmtDate(iso){ if(!iso) return "—"; const d=new Date(iso+"T00:00:00"); return isNaN(d)?iso:d.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric"}); }
+function nextInvoiceNo(){ let seq=0; try{ seq=parseInt(localStorage.getItem("vb_invoice_seq")||"0",10)||0; }catch(e){} seq+=1; try{ localStorage.setItem("vb_invoice_seq",String(seq)); }catch(e){} return `KW-${new Date().getFullYear()}-${String(seq).padStart(4,"0")}`; }
+function loadPayInfo(){ try{ return localStorage.getItem("vb_payinfo")||""; }catch(e){ return ""; } }
+function savePayInfo(v){ try{ (v&&v.trim())?localStorage.setItem("vb_payinfo",v.trim()):localStorage.removeItem("vb_payinfo"); }catch(e){} }
+function invoiceFromBooking(b){
+  const total=Number(b.totalPrice)||0;
+  const amountPaid=b.depositStatus==="yes"?total:(Number(b.depositAmount)||0);
+  const balanceDue=vbBalance(b);
+  const status=(b.depositStatus==="yes"||balanceDue<=0)?"paid":(amountPaid>0?"partial":"unpaid");
+  return { id:vbUid(), no:nextInvoiceNo(), bookingId:b.id, clientId:b.clientId,
+    clientName:b.clientName||"Client", email:b.email||"", phone:b.phone||"",
+    shootType:b.shootType||"", shootDate:b.date||"", location:b.location||"",
+    deliverables:(b.deliverables||[]).slice(),
+    items:[{label:(b.shootType||"Production")+(b.date?" — "+vbFmtDate(b.date):""),amount:total}],
+    total, amountPaid, balanceDue, status, paid:status==="paid",
+    paymentMethod:b.paymentMethod||"", payInfo:loadPayInfo(), paidDate:Date.now(), createdAt:Date.now() };
+}
+function invoiceEmailBody(inv){
+  const L=[]; const due=Number(inv.balanceDue!=null?inv.balanceDue:(inv.paid?0:inv.total))||0;
+  L.push(`Hi ${inv.clientName},`,"");
+  L.push(due>0?"Please find your invoice from KWelchVisuals below.":"Thank you — here is your paid invoice from KWelchVisuals.","");
+  L.push(`Invoice: ${inv.no}`);
+  L.push(`Date: ${new Date(inv.paidDate).toLocaleDateString()}`);
+  if(inv.shootType) L.push(`Service: ${inv.shootType}${inv.shootDate?" — "+vbFmtDate(inv.shootDate):""}`);
+  if(inv.location) L.push(`Location: ${inv.location}`);
+  L.push("","Items:");
+  (inv.items||[]).forEach(it=>L.push(`  • ${it.label} — ${vbMoney(it.amount)}`));
+  if(inv.deliverables&&inv.deliverables.length){ L.push("","Included deliverables:"); inv.deliverables.forEach(d=>L.push(`  • ${d}`)); }
+  L.push("",`TOTAL: ${vbMoney(inv.total)}`);
+  if(Number(inv.amountPaid)>0) L.push(`Amount paid: ${vbMoney(inv.amountPaid)}`);
+  L.push(due>0?`BALANCE DUE: ${vbMoney(due)}`:"STATUS: PAID IN FULL ✓");
+  if(inv.paymentMethod) L.push(`Payment method: ${inv.paymentMethod}`);
+  if(due>0&&inv.payInfo){ L.push("","How to pay:"); inv.payInfo.split("\n").forEach(line=>L.push("  "+line)); }
+  L.push("","With appreciation,","Keith Welch Jr · KWelchVisuals","Fairfield, CA · @kwelchvisuals");
+  return L.join("\n");
+}
+// One-time purge (2026-07-14, Keith: "erase the quotes and any info I haven't put in"):
+// quotes/invoices created before this moment were Gmail-recovery reconstructions, not
+// his entries — drop them on load everywhere so every device starts clean. Anything
+// he creates from now on has createdAt after the cutoff and is untouched.
+const VB_QI_SINCE=1784081798000;
+function qiFresh(a){ return (Array.isArray(a)?a:[]).filter(x=>x&&Number(x.createdAt||0)>=VB_QI_SINCE); }
+
+// 🎤 Voice intake — on-device speech-to-text (Chrome on Mac, Safari on iPhone).
+// Live transcript streams through onText; onStop fires when recording ends.
+function MicButton({onText,onStop}){
+  const [on,setOn]=useState(false);
+  const ref=useRef(null);
+  function toggle(){
+    if(on){ try{ ref.current&&ref.current.stop(); }catch(e){} return; }
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR){ alert("Voice input needs Chrome on your Mac or Safari on your iPhone."); return; }
+    const r=new SR(); ref.current=r;
+    r.continuous=true; r.interimResults=true; r.lang="en-US";
+    r.onresult=(e)=>{ let txt=""; for(let i=0;i<e.results.length;i++) txt+=e.results[i][0].transcript; onText(txt); };
+    r.onerror=()=>setOn(false);
+    r.onend=()=>{ setOn(false); onStop&&onStop(); };
+    try{ r.start(); setOn(true); }catch(e){ alert("Couldn't start the mic — check microphone permission."); }
+  }
+  return <button className="btn" onClick={toggle}
+    style={on?{borderColor:"var(--red)",color:"var(--red)",animation:"pulse 1.2s infinite"}:{}}>
+    {on?"⏹ Stop":"🎤 Voice"}</button>;
+}
+
+function emptyQuote(){ return { id:vbUid(), client:"", shootType:"", items:[{label:"",amount:0}], notes:"", createdAt:Date.now() }; }
+function quoteTotal(q){ return (q.items||[]).reduce((a,i)=>a+(Number(i.amount)||0),0); }
+function quoteEmailBody(q){
+  const L=[`Hi ${q.client||"there"},`,"","Here is your quote from KWelchVisuals:",""];
+  (q.items||[]).forEach(i=>i.label&&L.push(`  • ${i.label} — ${vbMoney(i.amount)}`));
+  L.push("",`TOTAL: ${vbMoney(quoteTotal(q))}`);
+  if(q.notes) L.push("",q.notes);
+  L.push("","With appreciation,","Keith Welch Jr · KWelchVisuals","Fairfield, CA · @kwelchvisuals");
+  return L.join("\n");
+}
+function bookingKey(b){ return "vb:"+(b.id||b.bookingId||((b.clientName||"?")+"|"+(b.date||""))); }
+function shootTypeToEditType(s){ s=(s||"").toLowerCase();
+  const map=[["wedding","wedding"],["real estate","realestate"],["realestate","realestate"],["listing","realestate"],["property","realestate"],["restaurant","restaurant"],["food","restaurant"],["menu","restaurant"],["reel","social"],["social","social"],["tiktok","social"],["school","school"],["district","school"],["senior","school"],["graduation","school"],["corporate","corporate"],["business","corporate"],["headshot","portrait"],["portrait","portrait"],["family","portrait"],["photo","portrait"],["event","event"],["party","event"],["concert","event"],["brand","brand"],["promo","brand"],["commercial","brand"]];
+  for(const [kw,t] of map) if(s.includes(kw)) return t;
+  return "other"; }
+function bookingToEdit(b){ const key=bookingKey(b);
+  const who=b.clientName||"New client"; const what=b.shootType||"Shoot";
+  const loc=b.location?` · ${b.location}`:""; const price=Number(b.totalPrice)?` · $${Number(b.totalPrice).toLocaleString()}`:"";
+  return { id:key, bookingId:key, title:`${who} — ${what}`, type:shootTypeToEditType(b.shootType), stage:"queued",
+           deadline:b.date||null, note:`Shoot${b.date?` ${b.date}`:""}${loc}${price}`,
+           sig:(who+"|"+(b.date||"")).toLowerCase(), created:Date.now() }; }
+// Union two record arrays by stable id (id / bookingId / clientId). On a clash,
+// keep the newer copy (by updatedAt/createdAt). Never drops a record, so two
+// devices adding different bookings offline both survive — no overwrite, no loss.
+function mergeById(a,b){
+  const keyOf=x=> x ? (x.id ?? x.bookingId ?? x.clientId ?? null) : null;
+  const ts=x=> Number((x&&(x.updatedAt||x.createdAt||x.created))||0);
+  const map=new Map(), extra=[], seen=new Set();
+  const put=x=>{ const k=keyOf(x);
+    if(k===null||k===undefined){ const s=JSON.stringify(x); if(!seen.has(s)){seen.add(s);extra.push(x);} return; }
+    const ex=map.get(k); if(!ex||ts(x)>=ts(ex)) map.set(k,x); };
+  (a||[]).forEach(put); (b||[]).forEach(put);
+  return [...map.values(), ...extra];
+}
+
+// Only bookings created on/after go-live auto-populate the Edit queue, so your
+// historical shoots don't flood it. Bump this date later to backfill older ones.
+const EDIT_SYNC_SINCE = new Date("2026-07-13T00:00:00-07:00").getTime();
+function bookingCreatedAt(b){ const c=Number(b.createdAt||b.created); return isNaN(c)?0:c; }
+// FRESH START: only bookings created on/after the cutoff are shown & synced, so old
+// history drops off cleanly and new bookings (created today+) persist via union-merge.
+function freshBookings(arr){ return Array.isArray(arr)?arr:[]; } // show ALL bookings — Keith wants full history visible (2026-07-14)
+// New bookings each get an edit in the pipeline. Deduped by bookingId + a
+// client|date signature. NEVER touches an existing edit's stage — a *paid* booking
+// is not a finished edit; it stays in the pipeline until you deliver it.
+function syncBookingsToEdits(bookings,setEdits){
+  if(!Array.isArray(bookings)||!bookings.length) return;
+  setEdits(prev=>{
+    const haveIds=new Set(prev.map(e=>e.bookingId).filter(Boolean));
+    const sigOf=e=>e.sig||(((e.title||"").split(" — ")[0])+"|"+(e.deadline||"")).toLowerCase();
+    const haveSig=new Set(prev.map(sigOf));
+    const add=[];
+    for(const b of bookings){
+      if(bookingCreatedAt(b) < EDIT_SYNC_SINCE) continue;   // skip historical bookings
+      const ed=bookingToEdit(b);
+      if(haveIds.has(ed.bookingId)||haveSig.has(ed.sig)) continue;
+      haveIds.add(ed.bookingId); haveSig.add(ed.sig); add.push(ed); }
+    if(!add.length) return prev;
+    return [...add, ...prev.filter(x=>!x.sample)];
+  });
+}
+
+function App(){
+  const [view,setView]=useState("dashboard");
+  const [tasks,setTasks]=useState(()=>load("kw_tasks_v2",seedTasks()));
+  const [revenue,setRevenue]=useState(()=>load("kw_rev_v2",seedRevenue()));
+  const [edits,setEdits]=useState(()=>load("kw_edits_v1",seedEdits()));
+  const [callbacks,setCallbacks]=useState(()=>load("kw_calls_v1",seedCalls()));
+  const [state,setState]=useState(()=>load("kw_state_v2",DEFAULT_STATE));
+  const [bookings,setBookings]=useState(()=>freshBookings(load("vb_bookings",[])));
+  const [clients,setClients]=useState(()=>load("vb_clients",[]));
+  const [cmd,setCmd]=useState("");
+  const [preview,setPreview]=useState(null);
+  const [editing,setEditing]=useState(null);
+  const [toasts,setToasts]=useState([]);
+  const [cloudMsg,setCloudMsg]=useState("");
+  const cloudReady=useRef(false);
+  const pushTimers=useRef({});
+
+  // Save to localStorage (instant + offline) AND push to the cloud (debounced) once synced.
+  function cooSave(key,value){
+    try{ localStorage.setItem(key,JSON.stringify(value)); }catch{ /* */ }
+    if(!cloudReady.current) return;
+    if(Array.isArray(value)&&value.length===0) return; // never let an empty list overwrite the cloud
+    clearTimeout(pushTimers.current[key]);
+    pushTimers.current[key]=setTimeout(()=>{
+      setCloudMsg("Saving…");
+      cooPush(key,value)
+        .then(()=>{ setCloudMsg("✓ Saved"); setTimeout(()=>setCloudMsg(""),1200); })
+        .catch(()=>setCloudMsg("Offline — saved on device"));
+    },700);
+  }
+  useEffect(()=>cooSave("kw_tasks_v2",tasks),[tasks]);
+  useEffect(()=>cooSave("kw_rev_v2",revenue),[revenue]);
+  useEffect(()=>cooSave("kw_edits_v1",edits),[edits]);
+  useEffect(()=>cooSave("kw_calls_v1",callbacks),[callbacks]);
+  useEffect(()=>cooSave("kw_state_v2",state),[state]);
+  // VisualBook data: COO is the sync bridge. Push bookings+clients to the cloud
+  // (via the accepted kw_edit_inbox key) whenever they change, so the other device
+  // pulls them on its next open. Silent, and guarded so an empty set can never
+  // overwrite (and thus erase) the cloud copy.
+  useEffect(()=>{ if(!cloudReady.current || (!bookings.length && !clients.length)) return;
+    const t=setTimeout(()=>cooPushSafe(VB_SYNC_KEY,{b:bookings,c:clients,_vb:true}),900);
+    return ()=>clearTimeout(t); },[bookings,clients]);
+
+  // On open: pull everything from the cloud (source of truth). Seed it the first time.
+  useEffect(()=>{
+    let cancelled=false;
+    const setters={kw_tasks_v2:setTasks,kw_rev_v2:setRevenue,kw_edits_v1:setEdits,kw_calls_v1:setCallbacks,kw_state_v2:setState};
+    (async()=>{
+      try{
+        setCloudMsg("Syncing…");
+        // ONE-TIME full reset per device: clears sample + junk data on this device AND
+        // the cloud, so every device lands on a clean slate the first time it opens this build.
+        if(localStorage.getItem("kw_reset_token")!==RESET_TOKEN){
+          await cooResetAll();
+          try{ localStorage.setItem("kw_reset_token",RESET_TOKEN); }catch(e){}
+          setTasks([]); setRevenue([]); setEdits([]); setCallbacks([]); setBookings([]); setClients([]); setState(DEFAULT_STATE);
+        }
+        const server=await cooPull();
+        if(cancelled) return;
+        // Collections except edits (handled below so we can fold in cross-device bookings).
+        for(const k of ["kw_tasks_v2","kw_rev_v2","kw_calls_v1","kw_state_v2"]){
+          const sv=server[k];
+          if(sv!==null && sv!==undefined){ setters[k](sv); try{localStorage.setItem(k,JSON.stringify(sv));}catch{} }
+          else { const loc=load(k,null); if(cooMeaningful(loc)) await cooPush(k,loc); }
+        }
+        // Edits board + cross-device booking inbox (bookings made on another device).
+        let baseEdits = Array.isArray(server.kw_edits_v1) ? server.kw_edits_v1
+                       : (cooMeaningful(load("kw_edits_v1",null)) ? load("kw_edits_v1",[]) : []);
+        const inbox = Array.isArray(server.kw_edit_inbox) ? server.kw_edit_inbox : [];
+        const have = new Set(baseEdits.map(e=>e.bookingId).filter(Boolean));
+        const add = inbox.filter(x=>x&&x.bookingId&&!have.has(x.bookingId)).map(x=>({
+          id:x.id||("vb"+x.bookingId), title:x.title||"New shoot edit", type:x.type||"other",
+          stage:x.stage||"queued", deadline:x.deadline||null, note:x.note||"", bookingId:x.bookingId, created:x.created||Date.now()}));
+        const finalEdits = [...add, ...baseEdits.filter(x=>!x.sample)];
+        setEdits(finalEdits);
+        try{ localStorage.setItem("kw_edits_v1", JSON.stringify(finalEdits)); }catch{}
+        await cooPush("kw_edits_v1", finalEdits);
+        if(inbox.length) await cooPush("kw_edit_inbox", []);   // inbox consumed
+        // ---- VisualBook bookings & clients: union-by-id across every device ----
+        // Stored under the accepted kw_edit_inbox key as { b, c, _vb:true }. Union
+        // with whatever this device already has, so nothing is ever lost, then push
+        // the union back for the other device. Failures are swallowed (never Offline).
+        const vbStore=(server.kw_edit_inbox && !Array.isArray(server.kw_edit_inbox) && typeof server.kw_edit_inbox==="object") ? server.kw_edit_inbox : null;
+        const bkCloud=vbStore&&Array.isArray(vbStore.b)?vbStore.b:[];
+        const clCloud=vbStore&&Array.isArray(vbStore.c)?vbStore.c:[];
+        const bkMerged=freshBookings(mergeById(load("vb_bookings",[]),bkCloud));   // drop pre-cutoff history
+        setBookings(bkMerged); try{ localStorage.setItem("vb_bookings",JSON.stringify(bkMerged)); }catch{}
+        const clMerged=mergeById(load("vb_clients",[]),clCloud);
+        setClients(clMerged); try{ if(clMerged.length) localStorage.setItem("vb_clients",JSON.stringify(clMerged)); }catch{}
+        syncBookingsToEdits(bkMerged,setEdits);   // new bookings from either device flow into Edits
+        if(bkMerged.length||clMerged.length) await cooPushSafe(VB_SYNC_KEY,{b:bkMerged,c:clMerged,_vb:true});
+        // Quotes + invoices live on VisualBook's own cloud channel — merge them in.
+        try{
+          const vbRes=await cooTimeout(fetch(VB_API,{headers:{"x-vb-key":COO_KEY}}),70000);
+          if(vbRes.ok){ const vb=await vbRes.json();
+            if(Array.isArray(vb.quotes)){ const m=qiFresh(mergeById(load("vb_quotes",[]),vb.quotes)); setQuotes(m); try{localStorage.setItem("vb_quotes",JSON.stringify(m));}catch(e){} }
+            if(Array.isArray(vb.invoices)){ const m=qiFresh(mergeById(load("vb_invoices",[]),vb.invoices)); setInvoices(m); try{localStorage.setItem("vb_invoices",JSON.stringify(m));}catch(e){} }
+          }
+        }catch(e){ /* non-fatal */ }
+        if(!cancelled){ cloudReady.current=true; setCloudMsg("✓ Synced"); setTimeout(()=>setCloudMsg(""),1800); }
+      }catch{ if(!cancelled) setCloudMsg("Offline — saved on device"); }
+    })();
+    return ()=>{cancelled=true;};
+  },[]);
+
+  // VisualBook is same-origin — read its bookings/clients live and make sure EVERY
+  // booking has an edit in the pipeline. Refresh on cross-tab writes, on focus, and
+  // on a slow interval (covers same-tab VisualBook edits). Paid ≠ done: sync only
+  // ADDS queued edits, it never advances or completes an existing one.
+  useEffect(()=>{
+    const refresh=()=>{
+      const bk=Array.isArray(load("vb_bookings",[]))?load("vb_bookings",[]):[];
+      const cl=Array.isArray(load("vb_clients",[]))?load("vb_clients",[]):[];
+      // merge (never replace) so a stale local copy can't drop cloud-synced records
+      setBookings(prev=>{ const m=freshBookings(mergeById(prev,bk)); try{ localStorage.setItem("vb_bookings",JSON.stringify(m)); }catch{} return m; });
+      setClients(prev=>mergeById(prev,cl));
+      drainEditInbox(setEdits);
+      syncBookingsToEdits(bk, setEdits);
+    };
+    refresh();
+    const onStorage=(e)=>{ if(!e.key||/^(vb_bookings|vb_clients|kw_edit_inbox)$/.test(e.key)) refresh(); };
+    const onFocus=()=>refresh();
+    window.addEventListener("storage",onStorage);
+    window.addEventListener("focus",onFocus);
+    const iv=setInterval(refresh,60000);
+    return ()=>{ window.removeEventListener("storage",onStorage); window.removeEventListener("focus",onFocus); clearInterval(iv); };
+  },[]);
+
+  const toast=(msg,xp)=>{ const id=Math.random(); setToasts(t=>[...t,{id,msg,xp}]); setTimeout(()=>setToasts(t=>t.filter(x=>x.id!==id)),2600); };
+  const addXp=(n)=>setState(s=>{let xp=s.xp+n,level=s.level,xpMax=s.xpMax; while(xp>=xpMax){xp-=xpMax;level++;xpMax=Math.round(xpMax*1.25);} return {...s,xp,level,xpMax};});
+
+  const openTasks=useMemo(()=>tasks.filter(t=>!t.done),[tasks]);
+  const sorted=useMemo(()=>[...tasks].sort((a,b)=>(a.done-b.done)||priorityScore(b)-priorityScore(a)),[tasks]);
+
+  function handleCmd(e){
+    if(e.key!=="Enter"||!cmd.trim())return;
+    const tpl=expandTemplate(cmd);
+    const parsed=parseNaturalLanguage(cmd);
+    setPreview({raw:cmd, parsed, tpl});
+    setCmd("");
+  }
+  function commitTask(t){
+    const nt={ id:"t"+Date.now(), title:t.title, category:t.category, deadline:t.deadline||null,
+      revenue:t.revenue||0, clientImportance:t.clientImportance||3, growth:t.growth||2, stress:t.stress||2,
+      estHours:t.estHours||1, done:false, created:Date.now(), subs:(t.subs||[]).map(s=>({t:s,d:false})) };
+    setTasks(p=>[nt,...p]); toast("Task added by AI COO", "+5"); addXp(5);
+  }
+  function toggleTask(id){
+    setTasks(p=>p.map(t=>{
+      if(t.id!==id)return t;
+      const done=!t.done;
+      if(done){ const stars=scoreToStars(priorityScore(t)); toast(`✓ ${STAR_LABEL[stars]} task done`, "+"+(stars*8)); addXp(stars*8);
+        if(t.category==="social") setState(s=>({...s,lastPostDate:todayISO(0)}));
+      }
+      return {...t,done};
+    }));
+  }
+  function toggleSub(tid,i){ setTasks(p=>p.map(t=> t.id!==tid?t:{...t,subs:t.subs.map((s,j)=>j===i?{...s,d:!s.d}:s)})); }
+  function delTask(id){ setTasks(p=>p.filter(t=>t.id!==id)); setEditing(null); }
+  function saveTask(t){ setTasks(p=>p.map(x=>x.id===t.id?t:x)); setEditing(null); toast("Task updated"); }
+
+  function quickAdd(title){ const p=parseNaturalLanguage(title); commitTask({...p}); }
+
+  // EDITS
+  function addEdit(e){ if(!e.title.trim())return; setEdits(p=>[{id:"e"+Date.now(),title:e.title.trim(),type:e.type||"other",stage:"queued",deadline:e.deadline||null,note:e.note||"",created:Date.now()},...p.filter(x=>!x.sample)]); toast("Edit added to the queue"); }
+  function moveEdit(id,dir){ setEdits(p=>p.map(x=>{ if(x.id!==id)return x; const i=EDIT_STAGES.findIndex(s=>s.k===x.stage); const ni=Math.max(0,Math.min(EDIT_STAGES.length-1,i+dir)); const ns=EDIT_STAGES[ni].k; if(ns==="delivered"&&x.stage!=="delivered"){toast("✓ Edit delivered","+12");addXp(12);} return {...x,stage:ns}; })); }
+  function delEdit(id){ setEdits(p=>p.filter(x=>x.id!==id)); }
+  // CALL BACKS
+  function addCall(c){ if(!c.name.trim())return; setCallbacks(p=>[{id:"c"+Date.now(),name:c.name.trim(),phone:(c.phone||"").trim(),reason:(c.reason||"").trim(),urgent:!!c.urgent,done:false,created:Date.now()},...p.filter(x=>!x.sample)]); toast("Added to call-back list"); }
+  function toggleCall(id){ setCallbacks(p=>p.map(x=>{ if(x.id!==id)return x; const done=!x.done; if(done){toast("✓ Called back","+5");addXp(5);} return {...x,done}; })); }
+  function delCall(id){ setCallbacks(p=>p.filter(x=>x.id!==id)); }
+
+  // ---- Smart Booking + Clients (full VisualBook parity — this is the one app) ----
+  const [bookingModal,setBookingModal]=useState(null);   // {booking,isNew}
+  const [clientModal,setClientModal]=useState(null);     // aggregated client row
+
+  // Quotes + Invoices (ported from VisualBook — same vb_* keys and cloud channel)
+  const [quotes,setQuotes]=useState(()=>qiFresh(load("vb_quotes",[])));
+  const [invoices,setInvoices]=useState(()=>qiFresh(load("vb_invoices",[])));
+  const [invoiceView,setInvoiceView]=useState(null);
+  useEffect(()=>{ try{ localStorage.setItem("vb_quotes",JSON.stringify(quotes)); }catch(e){}
+    const t=setTimeout(()=>vbCloudPush("quotes",quotes),900); return ()=>clearTimeout(t); },[quotes]);
+  useEffect(()=>{ try{ localStorage.setItem("vb_invoices",JSON.stringify(invoices)); }catch(e){}
+    const t=setTimeout(()=>vbCloudPush("invoices",invoices),900); return ()=>clearTimeout(t); },[invoices]);
+  function generateInvoice(b){
+    const fresh=invoiceFromBooking(b);
+    const existing=invoices.find(i=>i.bookingId===b.id);
+    let inv=fresh;
+    if(existing){ inv={...fresh,id:existing.id,no:existing.no,createdAt:existing.createdAt}; setInvoices(p=>p.map(i=>i.id===existing.id?inv:i)); }
+    else setInvoices(p=>[inv,...p]);
+    return inv;
+  }
+  function upsertClientFromBooking(b,prev){
+    let ex=prev.find(c=>c.id===b.clientId);
+    if(!ex&&b.clientName) ex=prev.find(c=>(c.name||"").trim().toLowerCase()===b.clientName.trim().toLowerCase());
+    if(ex) return prev.map(c=>c.id===ex.id?{...c,email:c.email||b.email,phone:c.phone||b.phone,instagram:c.instagram||b.instagram,city:c.city||b.location}:c);
+    return [...prev,{id:b.clientId,name:b.clientName||"Unnamed",email:b.email||"",phone:b.phone||"",instagram:b.instagram||"",website:"",city:b.location||"",notes:[],createdAt:Date.now()}];
+  }
+  function saveBooking(b){
+    if(!(b.clientName||"").trim()){ toast("Add the client's name first"); return; }
+    const exists=bookings.some(x=>x.id===b.id);
+    const nextB=exists?bookings.map(x=>x.id===b.id?b:x):[b,...bookings];
+    setBookings(nextB); try{ localStorage.setItem("vb_bookings",JSON.stringify(nextB)); }catch(e){}
+    setClients(prev=>{ const next=upsertClientFromBooking(b,prev); try{ localStorage.setItem("vb_clients",JSON.stringify(next)); }catch(e){} vbCloudPush("clients",next); return next; });
+    if(!exists) syncBookingsToEdits(nextB,setEdits);   // auto-queue the edit, deduped by bookingId
+    vbCloudPush("bookings",nextB);
+    toast(exists?"Booking updated":"✦ Booking saved — edit queued","+8"); if(!exists) addXp(8);
+    setBookingModal(null);
+  }
+  function deleteBooking(id){
+    const nextB=bookings.filter(b=>b.id!==id);
+    setBookings(nextB); try{ localStorage.setItem("vb_bookings",JSON.stringify(nextB)); }catch(e){}
+    vbCloudPush("bookings",nextB);
+    setBookingModal(null); toast("Booking deleted");
+  }
+
+  // Clients portal: add/edit clients directly (not only via bookings)
+  const [clientForm,setClientForm]=useState(null);   // {client,isNew}
+  function saveClient(c){
+    if(!(c.name||"").trim()){ toast("Give the client a name first"); return; }
+    setClients(prev=>{
+      const exists=prev.some(x=>x.id===c.id);
+      const next=exists?prev.map(x=>x.id===c.id?c:x):[{...c,createdAt:c.createdAt||Date.now(),notes:c.notes||[]},...prev];
+      try{ localStorage.setItem("vb_clients",JSON.stringify(next)); }catch(e){}
+      vbCloudPush("clients",next);
+      return next;
+    });
+    setClientForm(null); setClientModal(null); toast("Client saved");
+  }
+  function deleteClient(id){
+    setClients(prev=>{ const next=prev.filter(x=>x.id!==id); try{ localStorage.setItem("vb_clients",JSON.stringify(next)); }catch(e){} vbCloudPush("clients",next); return next; });
+    setClientForm(null); setClientModal(null); toast("Client removed");
+  }
+
+  const editsOpen=edits.filter(e=>e.stage!=="delivered").length;
+  const callsOpen=callbacks.filter(c=>!c.done).length;
+
+  const navItems=[
+    {k:"dashboard",label:"Dashboard"},
+    {k:"bookings",label:"Bookings",badge:bookings.length},
+    {k:"clients",label:"Clients",badge:new Set((bookings||[]).map(b=>b.clientId||b.clientName)).size},
+    {k:"quotes",label:"Quotes",badge:quotes.length},
+    {k:"invoices",label:"Invoices",badge:invoices.filter(i=>i.status!=="paid").length},
+    {k:"tasks",label:"Tasks",badge:openTasks.length},
+    {k:"edits",label:"Edits",badge:editsOpen},
+    {k:"callbacks",label:"Call Backs",badge:callsOpen},
+    {k:"planner",label:"Daily Planner"},
+    {k:"revenue",label:"Revenue Mode",badge:revenue.length},
+    {k:"coach",label:"Business Coach"},
+  ];
+
+  const hour=new Date().getHours();
+  const greet=hour<12?"Good morning":hour<18?"Good afternoon":"Good evening";
+
+  return (
+    <div className="app">
+      {/* SIDEBAR */}
+      <div className="sidebar">
+        <div className="brand">
+          <div className="wordmark">KWELCH<span>COO</span></div>
+          <div className="brand-sub">KWELCHVISUALS</div>
+        </div>
+        {navItems.map(n=>(
+          <div key={n.k} className={"nav-item"+(view===n.k?" active":"")} onClick={()=>setView(n.k)}>
+            <span className="ico"><Icon d={NAV_ICONS[n.k]} active={view===n.k}/></span><span>{n.label}</span>
+            {n.badge?<span className={"nav-badge"+((n.k==="tasks"&&tasks.some(t=>!t.done&&daysUntil(t.deadline)<0))||(n.k==="callbacks"&&callbacks.some(c=>!c.done&&c.urgent))||(n.k==="edits"&&edits.some(e=>e.stage!=="delivered"&&daysUntil(e.deadline)<0))?" red":"")}>{n.badge}</span>:null}
+          </div>
+        ))}
+        <div className="side-foot">
+          <div className="level-card">
+            <div className="lvl"><span>Business Level</span><b>Lv {state.level}</b></div>
+            <div className="xpbar"><i style={{width:(state.xp/state.xpMax*100)+"%"}}></i></div>
+            <div className="streak">🔥 <b style={{color:"var(--orange)"}}>{state.streak}-day</b> streak · {state.xp}/{state.xpMax} XP</div>
+          </div>
+        </div>
+      </div>
+
+      {/* MAIN */}
+      <div className="main">
+        <div className="topbar">
+          <div className="greet">
+            <h2>{greet}, Keith 👋 {cloudMsg && <span style={{fontSize:11,fontWeight:600,color:cloudMsg.indexOf("Offline")===0?"var(--orange)":"var(--gold)",letterSpacing:0}}>· ☁ {cloudMsg}</span>}</h2>
+            <p>{new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"})} · {openTasks.length} open · {openTasks.filter(t=>daysUntil(t.deadline)<0).length} overdue</p>
+          </div>
+          <div className="cmd">
+            <span className="ai-ico">✨</span>
+            <input value={cmd} onChange={e=>setCmd(e.target.value)} onKeyDown={handleCmd}
+              placeholder={`Tell your COO anything — "Edit John's wedding before Friday"`} />
+            <span className="cmd-hint">⏎ AI</span>
+          </div>
+        </div>
+
+        <div className="content">
+          {view==="dashboard" && <Dashboard {...{tasks,sorted,openTasks,revenue,state,toggleTask,setEditing,setView,quickAdd}}/>}
+          {view==="bookings" && <Bookings {...{bookings,clients,setView,
+            newBooking:()=>setBookingModal({booking:emptyVbBooking(),isNew:true}),
+            openBooking:(b)=>setBookingModal({booking:b,isNew:false})}}/>}
+          {view==="clients" && <Clients {...{clients,bookings,setView,
+            openClient:(row)=>setClientModal(row),
+            newClient:()=>setClientForm({client:{id:vbUid(),name:"",email:"",phone:"",instagram:"",website:"",city:"",notes:[],createdAt:Date.now()},isNew:true})}}/>}
+          {view==="quotes" && <Quotes {...{quotes,setQuotes}}/>}
+          {view==="invoices" && <Invoices {...{invoices,openInvoice:(inv)=>setInvoiceView(inv)}}/>}
+          {view==="tasks" && <Tasks {...{sorted,toggleTask,toggleSub,setEditing,quickAdd}}/>}
+          {view==="edits" && <Edits {...{edits,addEdit,moveEdit,delEdit,bookings}}/>}
+          {view==="callbacks" && <CallBacks {...{callbacks,addCall,toggleCall,delCall}}/>}
+          {view==="planner" && <Planner tasks={tasks}/>}
+          {view==="revenue" && <Revenue {...{revenue,setRevenue,toast}}/>}
+          {view==="coach" && <Coach {...{tasks,state}}/>}
+        </div>
+      </div>
+
+      {/* PREVIEW MODAL (smart add) */}
+      {preview && <PreviewModal preview={preview} onClose={()=>setPreview(null)} onCommit={(t)=>{commitTask(t);setPreview(null);}}/>}
+      {editing && <EditModal task={editing} onClose={()=>setEditing(null)} onSave={saveTask} onDelete={delTask}/>}
+      {bookingModal && <BookingModal data={bookingModal} clients={clients} onClose={()=>setBookingModal(null)} onSave={saveBooking} onDelete={deleteBooking}
+        onInvoice={(b)=>{ setBookingModal(null); setInvoiceView(generateInvoice(b)); }}/>}
+      {invoiceView && <InvoiceModal inv={invoiceView} onClose={()=>setInvoiceView(null)}/>}
+      {clientModal && <ClientModal data={clientModal} onClose={()=>setClientModal(null)}
+        onOpenBooking={(b)=>{setClientModal(null); setBookingModal({booking:b,isNew:false});}}
+        onBookAnother={(c)=>{setClientModal(null); setBookingModal({booking:{...emptyVbBooking(),clientId:c.id||vbUid(),clientName:c.name||"",email:c.email||"",phone:c.phone||"",instagram:c.ig||""},isNew:true});}}
+        onEdit={(c)=>setClientForm({client:{id:c.id||vbUid(),name:c.name||"",email:c.email||"",phone:c.phone||"",instagram:(c.ig||"").replace(/^@?/,""),website:c.website||"",city:c.city||"",notes:c.notes||[],createdAt:c.createdAt||Date.now()},isNew:false})}/>}
+      {clientForm && <ClientFormModal data={clientForm} onClose={()=>setClientForm(null)} onSave={saveClient} onDelete={deleteClient}/>}
+
+      <div className="toast-wrap">
+        {toasts.map(t=><div key={t.id} className="toast">{t.msg} {t.xp&&<span className="xp">{t.xp} XP</span>}</div>)}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- shared bits ---------- */
+// VisualBook-style thin line icons
+function Icon({d,active,size=21}){ return (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+    stroke={active?"#C9A84C":"#888888"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    {Array.isArray(d)?d.map((p,i)=><path key={i} d={p}/>):<path d={d}/>}
+  </svg>); }
+const NAV_ICONS={
+  dashboard:"M3 11l9-8 9 8M5 10v10h14V10",
+  tasks:["M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2","M9 5a2 2 0 002 2h2a2 2 0 002-2 2 2 0 00-2-2h-2a2 2 0 00-2 2z","M9 14l2 2 4-4"],
+  edits:["M6 3a3 3 0 100 6 3 3 0 000-6z","M6 15a3 3 0 100 6 3 3 0 000-6z","M20 4L8.5 15.5M14.5 14.5L20 20M8.5 8.5L11 11"],
+  callbacks:"M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.36 1.9.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0122 16.92z",
+  planner:"M4 5h16v15H4zM4 9h16M8 3v4M16 3v4",
+  revenue:"M3 17l6-6 4 4 8-8M21 7v6h-6",
+  coach:["M9 18h6M10 21h4","M12 3a6 6 0 00-4 10.5c.7.7 1 1.3 1 2.5h6c0-1.2.3-1.8 1-2.5A6 6 0 0012 3z"],
+  bookings:["M4 5h16v15H4zM4 9h16M8 3v4M16 3v4","M9 15l2 2 4-4"],
+  clients:["M17 21v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2","M9 3a4 4 0 100 8 4 4 0 000-8z","M23 21v-2a4 4 0 00-3-3.87","M16 3.13A4 4 0 0116 11"],
+  quotes:["M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z","M14 2v6h6","M9 13h6","M9 17h4"],
+  invoices:["M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z","M14 2v6h6","M12 10v8","M14.5 12h-3.5a1.25 1.25 0 000 2.5h2a1.25 1.25 0 010 2.5H9.5"],
+};
+function Stars({n}){ return <span className="stars">{[1,2,3,4,5].map(i=><span key={i} className={i<=n?"":"off"}>★</span>)}</span>; }
+function Gauge({val,color,size=46}){
+  const r=size/2-4, c=2*Math.PI*r;
+  return <svg className="gauge" width={size} height={size}>
+    <circle className="bg" cx={size/2} cy={size/2} r={r}/>
+    <circle cx={size/2} cy={size/2} r={r} stroke={color} strokeDasharray={c} strokeDashoffset={c*(1-val/100)}/>
+  </svg>;
+}
+function DueChip({deadline}){
+  const d=daysUntil(deadline);
+  if(deadline===null||d===null) return null;
+  let cls="",txt="";
+  if(d<0){cls="overdue";txt=`${-d}d overdue`;}
+  else if(d===0){cls="due-soon";txt="Today";}
+  else if(d===1){cls="due-soon";txt="Tomorrow";}
+  else txt=`${d} days`;
+  return <span className={"chip "+cls}>🗓️ {txt}</span>;
+}
+function TaskRow({t,toggleTask,toggleSub,setEditing,showSubs}){
+  const s=priorityScore(t), stars=scoreToStars(s);
+  const c=CATEGORIES[t.category];
+  const [open,setOpen]=useState(false);
+  const hasSubs=t.subs&&t.subs.length>0;
+  const stripe=t.done?"transparent":stars>=5?"#e0a030":stars>=4?"rgba(201,168,76,0.5)":"transparent";
+  return <div>
+    <div className={"task"+(t.done?" done":"")} onClick={()=>setEditing(t)} style={{boxShadow:"inset 3px 0 0 "+stripe}}>
+      <div className={"check"+(t.done?" on":"")} onClick={e=>{e.stopPropagation();toggleTask(t.id);}}>✓</div>
+      <div className="t-body">
+        <div className="t-title">{t.title}</div>
+        <div className="t-meta">
+          <span className="chip cat">{c.emoji} {c.label}</span>
+          <DueChip deadline={t.deadline}/>
+          {t.revenue>0 && <span className="chip" style={{color:"var(--green)"}}>💵 ${t.revenue.toLocaleString()}</span>}
+          {t.estHours && <span className="chip">⏱ {t.estHours}h</span>}
+          {hasSubs && <span className="chip" onClick={e=>{e.stopPropagation();setOpen(o=>!o);}} style={{cursor:"pointer",color:"var(--accent-2)"}}>📋 {t.subs.filter(x=>x.d).length}/{t.subs.length} steps {open?"▾":"▸"}</span>}
+        </div>
+      </div>
+      <div className="t-side">
+        <Stars n={stars}/>
+        <span className="pscore" title="AI priority score">{s}/100 · {STAR_LABEL[stars]}</span>
+      </div>
+    </div>
+    {open && hasSubs && t.subs.map((s,i)=>(
+      <div key={i} className={"sub-row"+(s.d?" done":"")}>
+        <div className={"sub-check"+(s.d?" on":"")} onClick={()=>toggleSub(t.id,i)}>✓</div>
+        <span>{s.t}</span>
+      </div>
+    ))}
+  </div>;
+}
+
+/* ---------- DASHBOARD ---------- */
+function Dashboard({tasks,sorted,openTasks,revenue,state,toggleTask,setEditing,setView,quickAdd}){
+  const critical=sorted.filter(t=>!t.done && scoreToStars(priorityScore(t))>=4).slice(0,5);
+  const suggestions=generateSuggestions(tasks,state);
+  const pipeline=revenue.reduce((s,r)=>s+r.value,0);
+  // health metrics
+  const overdueRatio=openTasks.length? openTasks.filter(t=>daysUntil(t.deadline)<0).length/openTasks.length:0;
+  const lastPost=state.lastPostDate?-daysUntil(state.lastPostDate):99;
+  const health={
+    "Pipeline strength":Math.min(100,Math.round(pipeline/300)),
+    "Task hygiene":Math.round((1-overdueRatio)*100),
+    "Content cadence":Math.max(0,100-lastPost*18),
+    "Revenue pace":Math.min(100,Math.round(openTasks.filter(t=>t.category==="revenue").reduce((s,t)=>s+(t.revenue||0),0)/state.dailyGoal*40)+20),
+  };
+  const healthScore=Math.round(Object.values(health).reduce((a,b)=>a+b,0)/4);
+  const doneToday=tasks.filter(t=>t.done).length;
+  const prod=Math.min(100, 40 + doneToday*12);
+  const mission=critical[0];
+
+  return <div>
+    <div className="stat-grid">
+      <div className="stat glass">
+        <div className="lab">Business Health</div>
+        <div className="val" style={{color:healthScore>70?"var(--green)":healthScore>45?"var(--gold)":"var(--red)"}}>{healthScore}</div>
+        <div className="delta up">▲ thriving</div>
+        <div className="ring"><Gauge val={healthScore} color="var(--green)"/></div>
+      </div>
+      <div className="stat glass">
+        <div className="lab">Productivity</div>
+        <div className="val" style={{color:"var(--accent-2)"}}>{prod}</div>
+        <div className="delta up">{doneToday} done today</div>
+        <div className="ring"><Gauge val={prod} color="var(--accent-2)"/></div>
+      </div>
+      <div className="stat glass">
+        <div className="lab">Open Pipeline</div>
+        <div className="val">${(pipeline/1000).toFixed(1)}k</div>
+        <div className="delta up">{revenue.length} live deals</div>
+      </div>
+      <div className="stat glass">
+        <div className="lab">Monthly Goal</div>
+        <div className="val" style={{color:"var(--gold)"}}>${(state.monthlyGoal/1000)}k</div>
+        <div className="delta">{Math.round(pipeline/state.monthlyGoal*100)}% in pipeline</div>
+      </div>
+    </div>
+
+    <div className="row">
+      <div className="col" style={{flex:1.55}}>
+        {tasks.length===0 && <div className="card glass" style={{background:"linear-gradient(135deg,rgba(201,168,76,0.16),rgba(224,160,48,0.06))"}}>
+          <div className="card-h"><h3>👋 Welcome, Keith — let's set up your day</h3></div>
+          <div style={{fontSize:14,color:"var(--txt-dim)",lineHeight:1.6,marginBottom:14}}>
+            This is your clean slate. Nothing here is real until <b style={{color:"var(--txt)"}}>you</b> add it. Use the <b style={{color:"var(--gold)"}}>✨ command bar at the top</b> and just type naturally — your COO sorts out the category, deadline, and priority for you. Try one:
+          </div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+            {["Edit the wedding before Friday","Pitch 3 local restaurants $2000","Post Instagram reel today","Back up SD cards"].map((ex,i)=>(
+              <button key={i} className="btn" style={{fontSize:12.5,padding:"9px 13px"}} onClick={()=>quickAdd(ex)}>+ {ex}</button>
+            ))}
+          </div>
+        </div>}
+        {mission && <div className="card glass" style={{background:"linear-gradient(135deg,rgba(201,168,76,0.16),rgba(224,160,48,0.06))"}}>
+          <div className="card-h"><h3>🎯 Today's Mission</h3><span className="sub">Highest-leverage move</span></div>
+          <div style={{fontSize:18,fontWeight:650,marginBottom:8}}>{mission.title}</div>
+          <div style={{fontSize:13,color:"var(--txt-dim)",lineHeight:1.5}}>
+            Your AI COO ranks this #1 today — {CATEGORIES[mission.category].label.toLowerCase()}{mission.revenue>0?`, $${mission.revenue.toLocaleString()} at stake`:""}{daysUntil(mission.deadline)!==null?`, due ${daysUntil(mission.deadline)<=0?"now":"in "+daysUntil(mission.deadline)+"d"}`:""}. Do this first.
+          </div>
+          <div style={{display:"flex",gap:10,marginTop:14}}>
+            <button className="btn primary" onClick={()=>toggleTask(mission.id)}>Mark Done · +XP</button>
+            <button className="btn" onClick={()=>setView("planner")}>See full plan</button>
+          </div>
+        </div>}
+
+        {tasks.length>0 && <div className="card glass">
+          <div className="card-h"><h3>🔥 Critical & High Priority</h3><span className="sub">auto-ranked</span></div>
+          <div className="tlist">
+            {critical.length?critical.map(t=><TaskRow key={t.id} t={t} toggleTask={toggleTask} toggleSub={()=>{}} setEditing={setEditing}/>):
+              <div className="empty"><div className="e-ico">🎉</div>Nothing critical right now. You're on top of it.</div>}
+          </div>
+        </div>}
+      </div>
+
+      <div className="col" style={{flex:1}}>
+        <div className="card glass">
+          <div className="card-h"><h3>🧠 AI Suggestions</h3></div>
+          {suggestions.map((s,i)=>(
+            <div key={i} className="sugg">
+              <span className="ic">{s.ic}</span>
+              <span className="txt" dangerouslySetInnerHTML={{__html:s.txt}}/>
+              <span className="act" onClick={()=>{ if(s.add)quickAdd(s.add); else if(s.nav)setView(s.nav); else if(s.tid)setEditing(tasks.find(t=>t.id===s.tid)); }}>{s.act}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="card glass">
+          <div className="card-h"><h3>💗 Business Health Breakdown</h3></div>
+          <div className="health-bd">
+            {Object.entries(health).map(([k,v])=>(
+              <div key={k} className="hb-row">
+                <span className="hl">{k}</span>
+                <div className="hb-bar"><i style={{width:v+"%",background:v>65?"linear-gradient(90deg,var(--green),#3f9968)":v>40?"linear-gradient(90deg,var(--gold),var(--orange))":"linear-gradient(90deg,var(--red),#c94545)"}}></i></div>
+                <span className="hv">{v}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>;
+}
+
+/* ---------- TASKS ---------- */
+function Tasks({sorted,toggleTask,toggleSub,setEditing,quickAdd}){
+  const [filter,setFilter]=useState("all");
+  const [adding,setAdding]=useState("");
+  const filters=[["all","All"],["open","Open"],["critical","Critical"],["revenue","💰 Revenue"],["done","Done"]];
+  const list=sorted.filter(t=>{
+    if(filter==="open")return !t.done;
+    if(filter==="done")return t.done;
+    if(filter==="critical")return !t.done&&scoreToStars(priorityScore(t))>=4;
+    if(filter==="revenue")return !t.done&&t.category==="revenue";
+    return true;
+  });
+  const openL=sorted.filter(t=>!t.done);
+  const overdueL=openL.filter(t=>{const d=daysUntil(t.deadline);return d!==null&&d<0;});
+  const pipeline=openL.reduce((a,t)=>a+(t.revenue||0),0);
+  const doneL=sorted.filter(t=>t.done);
+  const fmtK=n=>n>=1000?"$"+(n/1000).toFixed(n%1000?1:0)+"k":"$"+n;
+  return <div>
+    <div className="estrip">
+      <div className="estat"><span className="edge" style={{background:"var(--gold)"}}></span><div className="l">Open tasks</div><div className="v">{openL.length}</div></div>
+      <div className={"estat"+(overdueL.length?" warn":"")}><span className="edge" style={{background:overdueL.length?"var(--red)":"var(--border)"}}></span><div className="l">Overdue</div><div className="v">{overdueL.length}</div></div>
+      <div className="estat good"><span className="edge" style={{background:"var(--green)"}}></span><div className="l">In pipeline</div><div className="v">{fmtK(pipeline)}</div></div>
+      <div className="estat"><span className="edge" style={{background:"var(--txt-faint)"}}></span><div className="l">Completed</div><div className="v">{doneL.length}</div></div>
+    </div>
+    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:4,flexWrap:"wrap"}}>
+      <div className="seg">{filters.map(([k,l])=><button key={k} className={filter===k?"active":""} onClick={()=>setFilter(k)}>{l}</button>)}</div>
+      <div style={{marginLeft:"auto",display:"flex",gap:8,flex:1,maxWidth:420}}>
+        <input style={{flex:1,padding:"9px 13px",borderRadius:11,border:"1px solid var(--border-2)",background:"#1c1c1c",color:"var(--txt)",fontSize:13,outline:"none"}}
+          value={adding} onChange={e=>setAdding(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&adding.trim()){quickAdd(adding);setAdding("");}}}
+          placeholder="Quick add — type naturally, AI sorts it…"/>
+        <button className="add-btn" onClick={()=>{if(adding.trim()){quickAdd(adding);setAdding("");}}}>＋ Add</button>
+      </div>
+    </div>
+    <div className="card glass">
+      <div className="tlist">
+        {list.length?list.map(t=><TaskRow key={t.id} t={t} toggleTask={toggleTask} toggleSub={toggleSub} setEditing={setEditing} showSubs/>):
+          <div className="empty"><div className="e-ico">📭</div>No tasks here.</div>}
+      </div>
+    </div>
+  </div>;
+}
+
+/* ---------- EDITS ---------- */
+const INP={flex:1,minWidth:150,padding:"11px 13px",borderRadius:10,border:"1px solid var(--border)",background:"var(--panel-2)",color:"var(--txt)",fontSize:13.5,outline:"none",fontFamily:"inherit"};
+function Edits({edits,addEdit,moveEdit,delEdit,bookings}){
+  const [title,setTitle]=useState("");
+  const [type,setType]=useState("wedding");
+  const [deadline,setDeadline]=useState("");
+  const [filter,setFilter]=useState("all");   // stage filter: all|queued|editing|review|delivered
+  const [typeF,setTypeF]=useState("all");      // type filter
+  const [vmode,setVmode]=useState("list");     // list | board
+  const bkById={}; (bookings||[]).forEach(b=>{ bkById[bookingKey(b)]=b; });   // link edits back to their booking
+
+  const active=edits.filter(e=>e.stage!=="delivered");
+  const stageCount=k=>edits.filter(e=>e.stage===k).length;
+  const counts={}; EDIT_TYPE_KEYS.forEach(k=>counts[k]=active.filter(e=>e.type===k).length);
+  const overdue=active.filter(e=>{const d=daysUntil(e.deadline);return d!==null&&d<0;})
+                      .sort((a,b)=>(daysUntil(a.deadline)??0)-(daysUntil(b.deadline)??0));
+  const inProg=edits.filter(e=>e.stage==="editing"||e.stage==="review").length;
+  const deliveredCt=stageCount("delivered");
+
+  // filter by stage + type, then auto-rank (overdue first, then soonest)
+  const shown=edits.filter(e=>(filter==="all"||e.stage===filter)&&(typeF==="all"||e.type===typeF));
+  const rank=e=>{ const d=daysUntil(e.deadline);
+    const od=(d!==null&&d<0)?1000-d:0; const soon=(d!==null&&d>=0)?(100-Math.min(d,99)):0;
+    return (e.stage==="delivered"?-5000:0)+od+soon; };
+  const ranked=[...shown].sort((a,b)=>rank(b)-rank(a));
+  const submit=()=>{ if(!title.trim())return; addEdit({title,type,deadline}); setTitle("");setDeadline(""); };
+  const stageFilters=[["all","All"],...EDIT_STAGES.map(s=>[s.k,s.label])];
+
+  return <div>
+    {/* at-a-glance backlog stats */}
+    <div className="estrip">
+      <div className="estat"><span className="edge" style={{background:"#888"}}></span><div className="l">In Queue</div><div className="v">{stageCount("queued")}</div></div>
+      <div className="estat gold"><span className="edge" style={{background:"var(--gold)"}}></span><div className="l">In Progress</div><div className="v">{inProg}</div></div>
+      <div className={"estat"+(overdue.length?" warn":"")}><span className="edge" style={{background:overdue.length?"var(--red)":"var(--border)"}}></span><div className="l">Overdue</div><div className="v">{overdue.length}</div></div>
+      <div className="estat good"><span className="edge" style={{background:"var(--green)"}}></span><div className="l">Delivered</div><div className="v">{deliveredCt}</div></div>
+    </div>
+
+    {/* overdue nudges — same voice as the dashboard AI Suggestions */}
+    {overdue.slice(0,2).map(e=>{
+      const d=-daysUntil(e.deadline);
+      return <div key={e.id} className="sugg">
+        <span className="ic">🚨</span>
+        <span className="txt"><b>{e.title}</b> is {d}d overdue. Deliver it or reschedule before it snowballs.</span>
+        <span className="act" onClick={()=>moveEdit(e.id,1)}>Advance</span>
+      </div>;
+    })}
+
+    {/* quick add */}
+    <div className="card glass" style={{marginBottom:16}}>
+      <div className="card-h"><h3>✂️ Add an edit to the queue</h3><span className="sub">categorize it · then move it down the pipeline</span></div>
+      <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+        <input style={{...INP,flex:"1 1 220px"}} placeholder="What needs editing? (e.g. Smith wedding film)" value={title} onChange={e=>setTitle(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")submit();}}/>
+        <select style={{...INP,flex:"0 0 180px"}} value={type} onChange={e=>setType(e.target.value)}>
+          {EDIT_TYPE_KEYS.map(k=><option key={k} value={k}>{EDIT_TYPES[k].emoji} {EDIT_TYPES[k].label}</option>)}
+        </select>
+        <input type="date" style={{...INP,flex:"0 0 150px"}} value={deadline} onChange={e=>setDeadline(e.target.value)}/>
+        <button className="add-btn" onClick={submit}>＋ Add</button>
+      </div>
+    </div>
+
+    {/* stage filter + list/board toggle */}
+    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12,flexWrap:"wrap"}}>
+      <div className="seg">{stageFilters.map(([k,l])=><button key={k} className={filter===k?"active":""} onClick={()=>setFilter(k)}>{l}</button>)}</div>
+      <div className="viewtog" style={{marginLeft:"auto"}}>
+        <button className={vmode==="list"?"active":""} onClick={()=>setVmode("list")}>List</button>
+        <button className={vmode==="board"?"active":""} onClick={()=>setVmode("board")}>Board</button>
+      </div>
+    </div>
+
+    {/* type filter pills */}
+    {active.length>0 && <div className="typebar">
+      <span className={"type-pill"+(typeF==="all"?" active":"")} onClick={()=>setTypeF("all")}>All types <span className="n">{active.length}</span></span>
+      {EDIT_TYPE_KEYS.filter(k=>counts[k]>0).map(k=>(
+        <span key={k} className={"type-pill"+(typeF===k?" active":"")} onClick={()=>setTypeF(typeF===k?"all":k)}>
+          {EDIT_TYPES[k].emoji} {EDIT_TYPES[k].label} <span className="n">{counts[k]}</span>
+        </span>
+      ))}
+    </div>}
+
+    {vmode==="list" ? (
+      <div className="elist">
+        {ranked.length?ranked.map(e=>{
+          const ty=EDIT_TYPES[e.type]||EDIT_TYPES.other;
+          const st=EDIT_STAGES.find(s=>s.k===e.stage)||EDIT_STAGES[0];
+          const si=EDIT_STAGES.findIndex(s=>s.k===e.stage);
+          const done=e.stage==="delivered";
+          return <div key={e.id} className="ecard2" style={done?{opacity:.6}:null}>
+            <div className="stripe" style={{background:st.color}}></div>
+            <div className="ebody">
+              <div className="etop">
+                <div className="etitle">{e.title}</div>
+                <span className="stage-badge" style={{background:st.color+"22",color:st.color}}>{st.label}</span>
+              </div>
+              {e.note&&<div className="enote">{e.note}</div>}
+              <div className="emeta">
+                <span className="type-tag" style={{background:ty.color+"22",color:ty.color}}>{ty.emoji} {ty.label}</span>
+                <DueChip deadline={e.deadline}/>
+                {(()=>{ const b=bkById[e.bookingId]; if(!b) return null;
+                  return vbPaid(b)
+                    ? <span className="chip" style={{color:"var(--green)"}} title="Client paid — the edit still has to be delivered">💵 Paid · edit still due</span>
+                    : <span className="chip" style={{color:"var(--orange)"}}>💵 Balance ${vbBalance(b).toLocaleString()}</span>;
+                })()}
+              </div>
+              <div className="eprog">
+                {EDIT_STAGES.map((s,i)=><span key={s.k} className="pd" style={i<=si?{background:st.color}:null}></span>)}
+                <span className="plab">Stage {si+1} of {EDIT_STAGES.length}</span>
+              </div>
+              <div className="eact">
+                {si>0 && <span className="ebtn" onClick={()=>moveEdit(e.id,-1)}>◀ Back</span>}
+                {si<EDIT_STAGES.length-2 && <span className="ebtn go" onClick={()=>moveEdit(e.id,1)}>Advance ▶</span>}
+                {si===EDIT_STAGES.length-2 && <span className="ebtn go" onClick={()=>moveEdit(e.id,1)}>✓ Deliver</span>}
+                {done && <span className="ebtn" onClick={()=>moveEdit(e.id,-1)}>Reopen</span>}
+                <span className="ebtn del" onClick={()=>delEdit(e.id)}>Remove</span>
+              </div>
+            </div>
+          </div>;
+        }):<div className="empty"><div className="e-ico">🎬</div>Nothing here — queue is clear.</div>}
+      </div>
+    ) : (
+      <div className="board">
+        {EDIT_STAGES.map(st=>{
+          const col=ranked.filter(e=>e.stage===st.k);
+          return <div key={st.k} className="bcol">
+            <div className="bcol-h"><span className="dot" style={{background:st.color}}></span>{st.label}<span className="cnt">{col.length}</span></div>
+            {col.length?col.map(e=>{
+              const ty=EDIT_TYPES[e.type]||EDIT_TYPES.other;
+              const si=EDIT_STAGES.findIndex(s=>s.k===e.stage);
+              return <div key={e.id} className="ecard">
+                <div className="et">{e.title}</div>
+                {e.note&&<div style={{fontSize:11.5,color:"var(--txt-faint)",marginTop:4,lineHeight:1.4}}>{e.note}</div>}
+                <div className="em">
+                  <span className="type-tag" style={{background:ty.color+"22",color:ty.color}}>{ty.emoji} {ty.label}</span>
+                  <DueChip deadline={e.deadline}/>
+                </div>
+                <div className="ef">
+                  {si>0 && <span className="stepbtn" title="Move back a stage" onClick={()=>moveEdit(e.id,-1)}>◀</span>}
+                  {si<EDIT_STAGES.length-1 && <span className="stepbtn go" title="Advance a stage" onClick={()=>moveEdit(e.id,1)}>▶</span>}
+                  <span className="stepbtn x" title="Remove" onClick={()=>delEdit(e.id)}>✕</span>
+                </div>
+              </div>;
+            }):<div style={{fontSize:12,color:"var(--txt-faint)",padding:"6px 2px"}}>—</div>}
+          </div>;
+        })}
+      </div>
+    )}
+  </div>;
+}
+
+/* ---------- BOOKINGS (live from VisualBook, same-origin) ---------- */
+/* ---------- NEW SMART BOOKING (full VisualBook form, in this app) ---------- */
+function BookingModal({data,onClose,onSave,onDelete,onInvoice,clients}){
+  const [b,setB]=useState({...data.booking});
+  const [smart,setSmart]=useState("");
+  const smartRef=useRef("");
+  const [matched,setMatched]=useState("");
+  const set=(k,v)=>setB(p=>({...p,[k]:v}));
+  const setType=(v)=>setB(p=>({...p,shootType:v,deliverables:deliverablesFor(v)}));
+  const bal=vbBalance(b);
+  // Start + hours ⇄ end time: fill in any two, the third computes itself.
+  const addHrs=(t,h)=>{ const [H,M]=t.split(":").map(Number); const tot=((H*60+M+Math.round(h*60))%1440+1440)%1440; return String(Math.floor(tot/60)).padStart(2,"0")+":"+String(tot%60).padStart(2,"0"); };
+  const diffHrs=(a,z)=>{ const [h1,m1]=a.split(":").map(Number),[h2,m2]=z.split(":").map(Number); let d=(h2*60+m2)-(h1*60+m1); if(d<0)d+=1440; return Math.round(d/15)*15/60; };
+  const setStart=(v)=>setB(p=>({...p,startTime:v, endTime:(v&&Number(p.hours)>0)?addHrs(v,Number(p.hours)):p.endTime}));
+  const setHrs=(v)=>setB(p=>({...p,hours:v, endTime:(p.startTime&&Number(v)>0)?addHrs(p.startTime,Number(v)):p.endTime}));
+  const setEnd=(v)=>setB(p=>({...p,endTime:v, hours:(p.startTime&&v)?diffHrs(p.startTime,v):p.hours}));
+  // Parse text/voice → fields. If the name matches a client you already have,
+  // their saved contact info + id fill in (no duplicate client gets created).
+  function applySmartText(txt){
+    if(!(txt||"").trim()) return;
+    const f=parseSmartBooking(txt);
+    // normalize so voice ("Vine and Barrel") matches saved names ("Vine & Barrel")
+    const norm=s=>(s||"").toLowerCase().replace(/&/g,"and").replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
+    const tN=norm(txt);
+    let hit=null;
+    if(f.clientName) hit=(clients||[]).find(c=>norm(c.name)===norm(f.clientName));
+    if(!hit) hit=(clients||[]).find(c=>{ const n=norm(c.name); return n.length>3&&tN.includes(n); });
+    if(hit){
+      f.clientId=hit.id; f.clientName=hit.name;
+      f.email=f.email||hit.email||""; f.phone=f.phone||hit.phone||"";
+      f.instagram=f.instagram||hit.instagram||"";
+      setMatched("✓ Matched existing client: "+hit.name);
+    } else if(f.clientName){ setMatched("＋ New client will be created: "+f.clientName); }
+    setB(p=>({...p,...f}));
+  }
+  function applySmart(){ applySmartText(smart); }
+  return <div className="overlay" onClick={onClose}>
+    <div className="modal glass" onClick={e=>e.stopPropagation()}>
+      <h3>{data.isNew?"✦ New Smart Booking":"Edit booking"}</h3>
+      <div className="mh-sub">Client + shoot + money in one place. Saving queues the edit automatically.</div>
+      {data.isNew && <div className="field">
+        <label>Smart intake — talk it or paste it, I'll fill the form</label>
+        <div style={{display:"flex",gap:8}}>
+          <input value={smart} onChange={e=>{setSmart(e.target.value); smartRef.current=e.target.value;}} onKeyDown={e=>e.key==="Enter"&&applySmart()}
+            placeholder='e.g. "Wedding for Sarah James at Vine & Barrel june 5, 7am for 2 hours, $1500, $500 deposit"' style={{flex:1}}/>
+          <MicButton onText={(t)=>{setSmart(t); smartRef.current=t;}} onStop={()=>applySmartText(smartRef.current)}/>
+          <button className="btn" onClick={applySmart}>Fill</button>
+        </div>
+        {matched && <div style={{marginTop:8,fontSize:12.5,fontWeight:700,color:matched.startsWith("✓")?"var(--green)":"var(--gold)"}}>{matched}</div>}
+      </div>}
+      <div className="field"><label>Client name</label><input value={b.clientName} onChange={e=>set("clientName",e.target.value)} placeholder="Who's this for?"/></div>
+      <div className="field-row">
+        <div className="field"><label>Phone</label><input value={b.phone} onChange={e=>set("phone",e.target.value)} placeholder="707-555-0000"/></div>
+        <div className="field"><label>Email</label><input value={b.email} onChange={e=>set("email",e.target.value)} placeholder="name@email.com"/></div>
+      </div>
+      <div className="field-row">
+        <div className="field"><label>Instagram</label><input value={b.instagram} onChange={e=>set("instagram",e.target.value)} placeholder="@handle"/></div>
+        <div className="field"><label>Shoot type</label>
+          <select value={b.shootType} onChange={e=>setType(e.target.value)}>
+            <option value="">Pick one…</option>
+            {SHOOT_TYPES.map(s=><option key={s} value={s}>{s}</option>)}
+          </select></div>
+      </div>
+      <div className="field-row">
+        <div className="field"><label>Date</label><input type="date" value={b.date} onChange={e=>set("date",e.target.value)}/></div>
+        <div className="field"><label>Start</label><input type="time" value={b.startTime} onChange={e=>setStart(e.target.value)}/></div>
+      </div>
+      <div className="field-row">
+        <div className="field"><label>Hours shooting</label><input type="number" step="0.25" min="0" value={b.hours||""} onChange={e=>setHrs(Number(e.target.value)||0)} placeholder="e.g. 2"/></div>
+        <div className="field"><label>End (auto from start + hours)</label><input type="time" value={b.endTime} onChange={e=>setEnd(e.target.value)}/></div>
+      </div>
+      <div className="field"><label>Location</label><input value={b.location} onChange={e=>set("location",e.target.value)} placeholder="Venue / address"/></div>
+      <div className="field-row">
+        <div className="field"><label>Total price ($)</label><input type="number" value={b.totalPrice||""} onChange={e=>set("totalPrice",Number(e.target.value)||0)} placeholder="0"/></div>
+        <div className="field"><label>Deposit</label>
+          <select value={b.depositStatus} onChange={e=>set("depositStatus",e.target.value)}>
+            <option value="no">Not paid</option><option value="partial">Partial deposit</option><option value="yes">Paid in full</option>
+          </select></div>
+        {b.depositStatus==="partial" && <div className="field"><label>Deposit amount ($)</label><input type="number" value={b.depositAmount||""} onChange={e=>set("depositAmount",Number(e.target.value)||0)}/></div>}
+      </div>
+      <div className="field-row">
+        <div className="field"><label>Payment method</label>
+          <select value={b.paymentMethod} onChange={e=>set("paymentMethod",e.target.value)}>
+            <option value="">—</option>{PAYMENT_METHODS.map(m=><option key={m} value={m}>{m}</option>)}
+          </select></div>
+        <div className="field"><label>Balance due</label>
+          <div style={{padding:"11px 13px",borderRadius:10,border:"1px solid var(--border)",background:"var(--panel-2)",fontWeight:800,color:bal>0?"var(--orange)":"var(--green)"}}>{bal>0?"$"+bal.toLocaleString():"✓ Paid"}</div></div>
+      </div>
+      <div className="field"><label>Deliverables (one per line — auto-filled from shoot type)</label>
+        <textarea rows={4} value={(b.deliverables||[]).join("\n")} onChange={e=>set("deliverables",e.target.value.split("\n").map(s=>s.trim()).filter(Boolean))} style={{width:"100%",resize:"vertical"}}/></div>
+      <div className="field"><label>Notes</label><input value={b.notes} onChange={e=>set("notes",e.target.value)} placeholder="Anything to remember"/></div>
+      <div className="modal-foot">
+        {!data.isNew && <span className="left" style={{display:"flex",gap:8}}>
+          <button className="btn danger" onClick={()=>{ if(window.confirm("Delete this booking?")) onDelete(b.id); }}>Delete</button>
+          <button className="btn" onClick={()=>onInvoice(b)}>🧾 Invoice</button>
+        </span>}
+        <button className="btn" onClick={onClose}>Cancel</button>
+        <button className="btn primary" onClick={()=>onSave(b)}>{data.isNew?"Save Booking":"Save Changes"}</button>
+      </div>
+    </div>
+  </div>;
+}
+
+/* ---------- CLIENT PROFILE + PRINTABLE REPORT ---------- */
+function ClientModal({data,onClose,onOpenBooking,onBookAnother,onEdit}){
+  const shoots=[...(data.shoots||[])].sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+  const hours=shoots.reduce((s,b)=>s+(Number(b.hours)||0),0);
+  function printReport(){
+    const rows=shoots.map(b=>`<tr><td>${b.date||"—"}</td><td>${b.shootType||"Shoot"}</td><td>${b.location||""}</td><td style="text-align:right">$${(Number(b.totalPrice)||0).toLocaleString()}</td><td style="text-align:right">${vbBalance(b)>0?"$"+vbBalance(b).toLocaleString():"Paid"}</td></tr>`).join("");
+    const w=window.open("","_blank");
+    w.document.write(`<html><head><title>${data.name} — Client Report</title><style>
+      body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#111;padding:36px;max-width:720px;margin:auto}
+      h1{margin:0;font-size:22px} .sub{color:#666;font-size:13px;margin-bottom:4px}
+      .brand{font-weight:900;letter-spacing:3px;font-size:13px;margin-bottom:26px}.brand span{color:#C9A84C}
+      table{width:100%;border-collapse:collapse;margin-top:18px;font-size:13.5px}
+      th{background:#0a0a0a;color:#C9A84C;text-align:left;padding:9px 10px;font-size:11px;letter-spacing:1px;text-transform:uppercase}
+      td{padding:9px 10px;border-bottom:1px solid #e5e5e5}
+      .tot{margin-top:18px;font-size:14px}.tot b{font-size:17px}
+    </style></head><body>
+      <div class="brand">KWELCH<span>VISUALS</span></div>
+      <h1>${data.name}</h1>
+      <div class="sub">${[data.phone,data.email,data.ig].filter(Boolean).join(" · ")||""}</div>
+      <div class="sub">Client report · ${new Date().toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})}</div>
+      <table><tr><th>Date</th><th>Shoot</th><th>Location</th><th>Price</th><th>Balance</th></tr>${rows}</table>
+      <div class="tot">${shoots.length} shoot${shoots.length===1?"":"s"} · Lifetime revenue <b>$${data.revenue.toLocaleString()}</b>${data.balance>0?` · Outstanding balance <b style="color:#c0392b">$${data.balance.toLocaleString()}</b>`:""}</div>
+    </body></html>`);
+    w.document.close(); setTimeout(()=>w.print(),300);
+  }
+  return <div className="overlay" onClick={onClose}>
+    <div className="modal glass" onClick={e=>e.stopPropagation()}>
+      <h3>{data.name}</h3>
+      <div className="mh-sub">{data.count} shoot{data.count===1?"":"s"}{data.city?` · ${data.city}`:""}{data.ig?` · ${data.ig}`:""}</div>
+      <div className="estrip" style={{marginBottom:14}}>
+        <div className="estat"><span className="edge" style={{background:"var(--gold)"}}></span><div className="l">Booked</div><div className="v">${data.revenue.toLocaleString()}</div></div>
+        <div className="estat good"><span className="edge" style={{background:"var(--green)"}}></span><div className="l">Paid me</div><div className="v">${(data.paid!=null?data.paid:Math.max(0,data.revenue-data.balance)).toLocaleString()}</div></div>
+        <div className={"estat"+(data.balance>0?" warn":"")}><span className="edge" style={{background:data.balance>0?"var(--red)":"var(--border)"}}></span><div className="l">They owe</div><div className="v">${data.balance.toLocaleString()}</div></div>
+        {hours>0&&<div className="estat"><span className="edge" style={{background:"#8a9bff"}}></span><div className="l">Hours</div><div className="v">{hours}</div></div>}
+      </div>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}}>
+        {data.phone&&<a className="btn" style={{textDecoration:"none"}} href={"tel:"+String(data.phone).replace(/[^0-9+]/g,"")}>📞 Call</a>}
+        {data.phone&&<a className="btn" style={{textDecoration:"none"}} href={"sms:"+String(data.phone).replace(/[^0-9+]/g,"")}>💬 Text</a>}
+        {data.email&&<a className="btn" style={{textDecoration:"none"}} href={"mailto:"+data.email+"?subject="+encodeURIComponent("From KWelchVisuals")}>✉️ Email</a>}
+        <button className="btn" onClick={printReport}>⤓ Print Report</button>
+        <button className="btn" onClick={()=>onEdit(data)}>✏️ Edit</button>
+      </div>
+      {shoots.map((b,i)=><div key={i} className="ecard2" style={{cursor:"pointer",marginBottom:8}} onClick={()=>onOpenBooking(b)}>
+        <div className="stripe" style={{background:vbPaid(b)?"var(--green)":vbDepositPaid(b)?"var(--gold)":"var(--red)"}}></div>
+        <div className="ebody">
+          <div className="etop"><div className="etitle" style={{fontSize:14}}>{b.shootType||"Shoot"}</div>
+            <span className="chip" style={{color:"var(--green)"}}>${(Number(b.totalPrice)||0).toLocaleString()}</span></div>
+          <div className="emeta"><DueChip deadline={b.date}/>{vbBalance(b)>0&&<span className="chip" style={{color:"var(--orange)"}}>Balance ${vbBalance(b).toLocaleString()}</span>}</div>
+        </div>
+      </div>)}
+      <div className="modal-foot">
+        <button className="btn" onClick={onClose}>Close</button>
+        <button className="btn primary" onClick={()=>onBookAnother(data)}>＋ Book Another Shoot</button>
+      </div>
+    </div>
+  </div>;
+}
+
+/* ---------- ADD / EDIT CLIENT ---------- */
+function ClientFormModal({data,onClose,onSave,onDelete}){
+  const [c,setC]=useState({...data.client});
+  const set=(k,v)=>setC(p=>({...p,[k]:v}));
+  const [vTxt,setVTxt]=useState("");
+  const vRef=useRef("");
+  function applyVoice(txt){
+    if(!(txt||"").trim()) return;
+    const f=parseSmartBooking(txt);
+    setC(p=>({...p,
+      name:p.name||f.clientName||"",
+      phone:p.phone||f.phone||"",
+      email:p.email||f.email||"",
+      instagram:p.instagram||f.instagram||"",
+      city:p.city||f.location||""}));
+  }
+  return <div className="overlay" onClick={onClose}>
+    <div className="modal glass" onClick={e=>e.stopPropagation()}>
+      <h3>{data.isNew?"＋ Add Client":"Edit client"}</h3>
+      <div className="mh-sub">Contact info lives here — bookings, reports and emails all pull from it.</div>
+      {data.isNew && <div className="field">
+        <label>🎤 Say it — "Maria from Vine and Barrel, 707-555-1042, maria@vinebarrel.com"</label>
+        <div style={{display:"flex",gap:8}}>
+          <input value={vTxt} onChange={e=>{setVTxt(e.target.value); vRef.current=e.target.value;}} placeholder="Talk or type, then it fills below" style={{flex:1}}/>
+          <MicButton onText={(t)=>{setVTxt(t); vRef.current=t;}} onStop={()=>applyVoice(vRef.current)}/>
+          <button className="btn" onClick={()=>applyVoice(vRef.current)}>Fill</button>
+        </div>
+      </div>}
+      <div className="field"><label>Name / business</label><input value={c.name} onChange={e=>set("name",e.target.value)} placeholder="Client or business name"/></div>
+      <div className="field-row">
+        <div className="field"><label>Phone</label><input value={c.phone} onChange={e=>set("phone",e.target.value)} placeholder="707-555-0000"/></div>
+        <div className="field"><label>Email</label><input value={c.email} onChange={e=>set("email",e.target.value)} placeholder="name@email.com"/></div>
+      </div>
+      <div className="field-row">
+        <div className="field"><label>Instagram</label><input value={c.instagram} onChange={e=>set("instagram",e.target.value)} placeholder="@handle"/></div>
+        <div className="field"><label>City / area</label><input value={c.city} onChange={e=>set("city",e.target.value)} placeholder="Fairfield, CA"/></div>
+      </div>
+      <div className="field"><label>Website</label><input value={c.website} onChange={e=>set("website",e.target.value)} placeholder="https://…"/></div>
+      <div className="modal-foot">
+        {!data.isNew && <button className="btn danger left" onClick={()=>{ if(window.confirm("Remove this client? Their bookings stay.")) onDelete(c.id); }}>Remove</button>}
+        <button className="btn" onClick={onClose}>Cancel</button>
+        <button className="btn primary" onClick={()=>onSave(c)}>{data.isNew?"Add Client":"Save Changes"}</button>
+      </div>
+    </div>
+  </div>;
+}
+
+/* ---------- QUOTES (ported from VisualBook) ---------- */
+function Quotes({quotes,setQuotes}){
+  const [editing,setEditing]=useState(null);
+  function del(id){ if(window.confirm("Delete this quote?")) setQuotes(p=>p.filter(q=>q.id!==id)); }
+  function save(q){ setQuotes(p=>p.some(x=>x.id===q.id)?p.map(x=>x.id===q.id?q:x):[q,...p]); setEditing(null); }
+  const setItem=(i,k,v)=>setEditing(p=>({...p,items:p.items.map((it,idx)=>idx===i?{...it,[k]:v}:it)}));
+  return <div>
+    <button className="btn primary" style={{width:"100%",padding:"14px",fontSize:15,marginBottom:14}} onClick={()=>setEditing(emptyQuote())}>＋ New Quote</button>
+    {quotes.length?<div className="elist">{quotes.map(q=>(
+      <div key={q.id} className="ecard2" style={{cursor:"pointer"}} onClick={()=>setEditing({...q})}>
+        <div className="stripe" style={{background:"var(--gold)"}}></div>
+        <div className="ebody">
+          <div className="etop">
+            <div style={{minWidth:0}}>
+              <div className="etitle">{q.client||"Untitled quote"}</div>
+              <div className="enote">{q.shootType||"—"} · {(q.items||[]).length} item{(q.items||[]).length===1?"":"s"}</div>
+            </div>
+            <div style={{fontSize:15,fontWeight:800,color:"var(--gold)"}}>{vbMoney(quoteTotal(q))}</div>
+          </div>
+          <div className="emeta" onClick={e=>e.stopPropagation()}>
+            <a className="chip" style={{color:"var(--gold)",textDecoration:"none",cursor:"pointer"}}
+               href={"mailto:?subject="+encodeURIComponent("Quote from KWelchVisuals")+"&body="+encodeURIComponent(quoteEmailBody(q))}>📧 Email quote</a>
+            <span className="chip" style={{color:"var(--red)",cursor:"pointer"}} onClick={()=>del(q.id)}>Delete</span>
+          </div>
+        </div>
+      </div>
+    ))}</div>:<div className="empty"><div className="e-ico">❖</div>No quotes yet — tap <b>＋ New Quote</b> to price a job.</div>}
+    {editing && <div className="overlay" onClick={()=>setEditing(null)}>
+      <div className="modal glass" onClick={e=>e.stopPropagation()}>
+        <h3>{quotes.some(x=>x.id===editing.id)?"Edit quote":"＋ New Quote"}</h3>
+        <div className="mh-sub">Pick a shoot type to auto-fill the line items, then set the prices.</div>
+        <div className="field"><label>Client / lead</label><input value={editing.client} onChange={e=>setEditing({...editing,client:e.target.value})} placeholder="Who's this quote for?"/></div>
+        <div className="field"><label>Shoot type</label>
+          <select value={editing.shootType} onChange={e=>{ const items=deliverablesFor(e.target.value).map(d=>({label:d,amount:0})); setEditing({...editing,shootType:e.target.value,items:items.length?items:editing.items}); }}>
+            <option value="">Select…</option>{SHOOT_TYPES.map(t=><option key={t} value={t}>{t}</option>)}
+          </select></div>
+        <div className="field"><label>Line items <span style={{color:"var(--gold)",cursor:"pointer",float:"right"}} onClick={()=>setEditing({...editing,items:[...editing.items,{label:"",amount:0}]})}>＋ Line</span></label>
+          {editing.items.map((it,i)=>(
+            <div key={i} style={{display:"flex",gap:8,marginBottom:8}}>
+              <input placeholder="Item" value={it.label} onChange={e=>setItem(i,"label",e.target.value)} style={{flex:2}}/>
+              <input placeholder="$" type="number" value={it.amount||""} onChange={e=>setItem(i,"amount",Number(e.target.value)||0)} style={{flex:1}}/>
+              <button className="btn" style={{padding:"6px 12px"}} onClick={()=>setEditing({...editing,items:editing.items.filter((_,idx)=>idx!==i)})}>✕</button>
+            </div>))}
+          <div style={{display:"flex",justifyContent:"space-between",fontWeight:800,padding:"12px 14px",borderRadius:10,background:"var(--panel-2)",border:"1px solid var(--border)"}}>
+            <span>Total</span><span style={{color:"var(--gold)"}}>{vbMoney(quoteTotal(editing))}</span></div>
+        </div>
+        <div className="field"><label>Notes</label><input value={editing.notes} onChange={e=>setEditing({...editing,notes:e.target.value})} placeholder="Terms, validity, options…"/></div>
+        <div className="modal-foot">
+          <button className="btn" onClick={()=>setEditing(null)}>Cancel</button>
+          <button className="btn primary" onClick={()=>save(editing)}>Save Quote</button>
+        </div>
+      </div>
+    </div>}
+  </div>;
+}
+
+/* ---------- INVOICES (ported from VisualBook) ---------- */
+function Invoices({invoices,openInvoice}){
+  const [payInfo,setPayInfo]=useState(loadPayInfo());
+  const outstanding=invoices.reduce((s,i)=>s+(i.status!=="paid"?(Number(i.balanceDue)||0):0),0);
+  const collected=invoices.reduce((s,i)=>s+(Number(i.amountPaid)||0),0);
+  const fmtK=n=>n>=1000?"$"+(n/1000).toFixed(n%1000?1:0)+"k":"$"+Math.round(n);
+  const BADGE={paid:["PAID","var(--green)"],partial:["PARTIAL","var(--gold)"],unpaid:["DUE","var(--red)"]};
+  return <div>
+    <div className="estrip">
+      <div className="estat"><span className="edge" style={{background:"var(--gold)"}}></span><div className="l">Invoices</div><div className="v">{invoices.length}</div></div>
+      <div className={"estat"+(outstanding>0?" warn":"")}><span className="edge" style={{background:outstanding>0?"var(--red)":"var(--border)"}}></span><div className="l">Outstanding</div><div className="v">{fmtK(outstanding)}</div></div>
+      <div className="estat good"><span className="edge" style={{background:"var(--green)"}}></span><div className="l">Collected</div><div className="v">{fmtK(collected)}</div></div>
+    </div>
+    <div className="field" style={{marginBottom:14}}>
+      <label>Your payment details (shown on invoices with a balance — Zelle / Venmo / check info)</label>
+      <input value={payInfo} onChange={e=>{setPayInfo(e.target.value); savePayInfo(e.target.value);}} placeholder="e.g. Zelle: 707-XXX-XXXX · Venmo: @kwelchvisuals"/>
+    </div>
+    {invoices.length?<div className="elist">{invoices.map(inv=>{
+      const [lbl,col]=BADGE[inv.status]||BADGE.unpaid;
+      return <div key={inv.id} className="ecard2" style={{cursor:"pointer"}} onClick={()=>openInvoice(inv)}>
+        <div className="stripe" style={{background:col}}></div>
+        <div className="ebody">
+          <div className="etop">
+            <div style={{minWidth:0}}>
+              <div className="etitle">{inv.clientName}</div>
+              <div className="enote">{inv.no} · {inv.shootType||"Production"}{inv.shootDate?` · ${vbFmtDate(inv.shootDate)}`:""}</div>
+            </div>
+            <div style={{textAlign:"right"}}>
+              <div style={{fontSize:15,fontWeight:800}}>{vbMoney(inv.total)}</div>
+              <span className="stage-badge" style={{background:col+"22",color:col}}>{lbl}</span>
+            </div>
+          </div>
+          {inv.status!=="paid"&&<div className="emeta"><span className="chip" style={{color:"var(--orange)"}}>Balance {vbMoney(inv.balanceDue)}</span></div>}
+        </div>
+      </div>;
+    })}</div>:<div className="empty"><div className="e-ico">🧾</div>No invoices yet — open a booking and tap <b>🧾 Invoice</b>.</div>}
+  </div>;
+}
+
+function InvoiceModal({inv,onClose}){
+  const due=Number(inv.balanceDue!=null?inv.balanceDue:(inv.paid?0:inv.total))||0;
+  const [lbl,col]=inv.status==="paid"?["PAID IN FULL ✓","var(--green)"]:inv.status==="partial"?["PARTIALLY PAID","var(--gold)"]:["PAYMENT DUE","var(--red)"];
+  function printInvoice(){
+    const rows=(inv.items||[]).map(it=>`<tr><td>${it.label}</td><td style="text-align:right">${vbMoney(it.amount)}</td></tr>`).join("");
+    const dels=(inv.deliverables||[]).map(d=>`<li>${d}</li>`).join("");
+    const w=window.open("","_blank");
+    w.document.write(`<html><head><title>Invoice ${inv.no}</title><style>
+      body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#111;padding:36px;max-width:680px;margin:auto}
+      .brand{font-weight:900;letter-spacing:3px;font-size:13px}.brand span{color:#C9A84C}
+      h1{font-size:20px;margin:18px 0 2px}.sub{color:#666;font-size:13px}
+      table{width:100%;border-collapse:collapse;margin-top:20px;font-size:14px}
+      th{background:#0a0a0a;color:#C9A84C;text-align:left;padding:9px 10px;font-size:11px;letter-spacing:1px;text-transform:uppercase}
+      td{padding:10px;border-bottom:1px solid #e5e5e5}
+      .tot{margin-top:16px;text-align:right;font-size:15px}.tot b{font-size:19px}
+      .badge{display:inline-block;margin-top:10px;padding:5px 12px;border-radius:20px;font-weight:800;font-size:12px;letter-spacing:1px}
+      ul{font-size:13px;color:#444}.pay{margin-top:16px;font-size:13px;background:#faf6ea;padding:12px 14px;border-radius:8px;white-space:pre-line}
+    </style></head><body>
+      <div class="brand">KWELCH<span>VISUALS</span></div>
+      <h1>Invoice ${inv.no}</h1>
+      <div class="sub">${new Date(inv.paidDate).toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})} · ${inv.clientName}${inv.email?" · "+inv.email:""}</div>
+      ${inv.location?`<div class="sub">📍 ${inv.location}</div>`:""}
+      <span class="badge" style="background:${inv.status==="paid"?"#e6f6ec;color:#1e7d43":inv.status==="partial"?"#fdf6e3;color:#9a7b1d":"#fdeaea;color:#b03030"}">${lbl}</span>
+      <table><tr><th>Item</th><th style="text-align:right">Amount</th></tr>${rows}</table>
+      <div class="tot">Total <b>${vbMoney(inv.total)}</b>${Number(inv.amountPaid)>0?`<br>Paid ${vbMoney(inv.amountPaid)}`:""}${due>0?`<br>Balance due <b style="color:#b03030">${vbMoney(due)}</b>`:""}</div>
+      ${dels?`<div style="margin-top:16px;font-size:13px"><b>Included deliverables</b><ul>${dels}</ul></div>`:""}
+      ${due>0&&inv.payInfo?`<div class="pay"><b>How to pay</b>\n${inv.payInfo}</div>`:""}
+      <p style="margin-top:26px;font-size:13px;color:#666">With appreciation,<br>Keith Welch Jr · KWelchVisuals · Fairfield, CA · @kwelchvisuals</p>
+    </body></html>`);
+    w.document.close(); setTimeout(()=>w.print(),300);
+  }
+  return <div className="overlay" onClick={onClose}>
+    <div className="modal glass" onClick={e=>e.stopPropagation()}>
+      <h3>Invoice {inv.no}</h3>
+      <div className="mh-sub">{inv.clientName}{inv.shootType?` · ${inv.shootType}`:""}{inv.shootDate?` · ${vbFmtDate(inv.shootDate)}`:""}</div>
+      <span className="stage-badge" style={{background:col+"22",color:col,fontSize:12,padding:"5px 12px"}}>{lbl}</span>
+      <div style={{margin:"16px 0",padding:"14px 16px",borderRadius:12,background:"var(--panel-2)",border:"1px solid var(--border)"}}>
+        {(inv.items||[]).map((it,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",fontSize:13.5,marginBottom:6}}><span>{it.label}</span><span>{vbMoney(it.amount)}</span></div>)}
+        <div style={{display:"flex",justifyContent:"space-between",fontWeight:800,borderTop:"1px solid var(--border)",paddingTop:10,marginTop:4}}><span>Total</span><span style={{color:"var(--gold)"}}>{vbMoney(inv.total)}</span></div>
+        {Number(inv.amountPaid)>0&&<div style={{display:"flex",justifyContent:"space-between",fontSize:13,color:"var(--green)",marginTop:6}}><span>Paid</span><span>{vbMoney(inv.amountPaid)}</span></div>}
+        {due>0&&<div style={{display:"flex",justifyContent:"space-between",fontSize:13,color:"var(--orange)",marginTop:4}}><span>Balance due</span><span>{vbMoney(due)}</span></div>}
+      </div>
+      {inv.paymentMethod&&<div className="mh-sub">Payment method: {inv.paymentMethod}</div>}
+      <div className="modal-foot">
+        <button className="btn left" onClick={printInvoice}>⤓ Print / PDF</button>
+        {inv.email&&<a className="btn" style={{textDecoration:"none"}} href={"mailto:"+inv.email+"?subject="+encodeURIComponent("Invoice "+inv.no+" — KWelchVisuals")+"&body="+encodeURIComponent(invoiceEmailBody(inv))}>📧 Email Invoice</a>}
+        <button className="btn primary" onClick={onClose}>Done</button>
+      </div>
+    </div>
+  </div>;
+}
+
+function Bookings({bookings,clients,setView,newBooking,openBooking}){
+  const [filter,setFilter]=useState("all");
+  const today=new Date(); today.setHours(0,0,0,0);
+  const withMeta=(bookings||[]).map(b=>({b, d:daysUntil(b.date), bal:vbBalance(b), paid:vbPaid(b)}));
+  const upcoming=withMeta.filter(x=>x.d!==null&&x.d>=0);
+  const monthRev=withMeta.filter(x=>{const dt=new Date(x.b.date); return !isNaN(dt)&&dt.getMonth()===today.getMonth()&&dt.getFullYear()===today.getFullYear();}).reduce((s,x)=>s+(Number(x.b.totalPrice)||0),0);
+  const awaiting=withMeta.reduce((s,x)=>s+(x.bal>0?x.bal:0),0);
+  const fmtK=n=>n>=1000?"$"+(n/1000).toFixed(n%1000?1:0)+"k":"$"+Math.round(n);
+  const filters=[["all","All"],["upcoming","Upcoming"],["past","Past"],["unpaid","Unpaid"]];
+  const list=withMeta.filter(x=>{
+    if(filter==="upcoming")return x.d!==null&&x.d>=0;
+    if(filter==="past")return x.d!==null&&x.d<0;
+    if(filter==="unpaid")return x.bal>0;
+    return true;
+  }).sort((a,b)=>{ const ad=a.d===null?99999:a.d, bd=b.d===null?99999:b.d;
+      const ax=ad<0?100000-ad:ad, bx=bd<0?100000-bd:bd; return ax-bx; });
+  const initials=(n)=>((n||"").replace(/[^a-zA-Z ]/g,"").trim().split(/\s+/).map(w=>w[0]).slice(0,2).join("").toUpperCase())||"•";
+  return <div>
+    <button className="btn primary" style={{width:"100%",padding:"14px",fontSize:15,marginBottom:14}} onClick={newBooking}>✦ New Smart Booking</button>
+    <div className="estrip">
+      <div className="estat"><span className="edge" style={{background:"var(--gold)"}}></span><div className="l">Total bookings</div><div className="v">{withMeta.length}</div></div>
+      <div className="estat"><span className="edge" style={{background:"#8a9bff"}}></span><div className="l">Upcoming</div><div className="v">{upcoming.length}</div></div>
+      <div className="estat good"><span className="edge" style={{background:"var(--green)"}}></span><div className="l">This month</div><div className="v">{fmtK(monthRev)}</div></div>
+      <div className={"estat"+(awaiting>0?" warn":"")}><span className="edge" style={{background:awaiting>0?"var(--red)":"var(--border)"}}></span><div className="l">Awaiting balance</div><div className="v">{fmtK(awaiting)}</div></div>
+    </div>
+    <div className="sugg"><span className="ic">🎬</span><span className="txt">Every booking is auto-queued in your <b>Edits</b> pipeline. Getting paid doesn't finish the edit — you deliver it there.</span><span className="act" onClick={()=>setView("edits")}>Edits</span></div>
+    <div className="seg" style={{marginBottom:14}}>{filters.map(([k,l])=><button key={k} className={filter===k?"active":""} onClick={()=>setFilter(k)}>{l}</button>)}</div>
+    {list.length?<div className="elist">{list.map((x,i)=>{
+      const b=x.b; const ty=EDIT_TYPES[shootTypeToEditType(b.shootType)]||EDIT_TYPES.other;
+      const stripe=x.paid?"var(--green)":vbDepositPaid(b)?"var(--gold)":"var(--red)";
+      return <div key={i} className="ecard2" style={{cursor:"pointer"}} onClick={()=>openBooking(b)}>
+        <div className="stripe" style={{background:stripe}}></div>
+        <div className="ebody">
+          <div className="etop">
+            <div style={{display:"flex",alignItems:"center",gap:11,flex:1,minWidth:0}}>
+              <div className="cb-av">{initials(b.clientName)}</div>
+              <div style={{minWidth:0}}>
+                <div className="etitle">{b.clientName||"New client"}</div>
+                <div className="enote">{b.shootType||"Shoot"}{b.location?` · ${b.location}`:""}</div>
+              </div>
+            </div>
+            <span className="stage-badge" style={{background:ty.color+"22",color:ty.color}}>{ty.emoji} {ty.label}</span>
+          </div>
+          <div className="emeta">
+            <DueChip deadline={b.date}/>
+            {Number(b.totalPrice)>0 && <span className="chip" style={{color:"var(--green)"}}>💵 ${Number(b.totalPrice).toLocaleString()}</span>}
+            {x.paid ? <span className="chip" style={{color:"var(--green)"}}>✓ Paid</span>
+                    : x.bal>0 ? <span className="chip" style={{color:"var(--orange)"}}>Balance ${x.bal.toLocaleString()}</span> : null}
+            {b.phone && <a className="cb-tel" href={"tel:"+String(b.phone).replace(/[^0-9+]/g,"")} style={{fontSize:12}}>{b.phone}</a>}
+          </div>
+        </div>
+      </div>;
+    })}</div>:<div className="empty"><div className="e-ico">📅</div>No bookings yet — tap <b>✦ New Smart Booking</b> above to add your first.</div>}
+  </div>;
+}
+
+/* ---------- CLIENTS (live from VisualBook, same-origin) ---------- */
+function Clients({clients,bookings,setView,openClient,newClient}){
+  const [q,setQ]=useState("");
+  const bk=bookings||[];
+  const keyOf=b=>b.clientId||("name:"+((b.clientName||"").toLowerCase().trim()));
+  const map={};
+  (clients||[]).forEach(c=>{ const k=c.id?c.id:("name:"+((c.clientName||c.name||"").toLowerCase().trim())); map[k]={info:c,shoots:[],revenue:0,balance:0}; });
+  bk.forEach(b=>{ const k=keyOf(b); if(!map[k]) map[k]={info:{clientName:b.clientName,phone:b.phone,email:b.email,instagram:b.instagram},shoots:[],revenue:0,balance:0};
+    map[k].shoots.push(b); map[k].revenue+=Number(b.totalPrice)||0; map[k].balance+=vbBalance(b); });
+  let rows=Object.values(map).map(r=>({ id:r.info.id||(r.shoots[0]&&r.shoots[0].clientId)||null, name:(r.info.clientName||r.info.name||"Unknown"), phone:r.info.phone||"", email:r.info.email||"", ig:r.info.instagram||"", city:r.info.city||"", website:r.info.website||"", notes:r.info.notes||[], createdAt:r.info.createdAt, count:r.shoots.length, revenue:r.revenue, balance:r.balance, paid:Math.max(0,r.revenue-r.balance), shoots:r.shoots }));
+  const totalRev=rows.reduce((s,r)=>s+r.revenue,0);
+  const repeat=rows.filter(r=>r.count>1).length;
+  const fmtK=n=>n>=1000?"$"+(n/1000).toFixed(n%1000?1:0)+"k":"$"+Math.round(n);
+  if(q.trim()) rows=rows.filter(r=>r.name.toLowerCase().includes(q.toLowerCase()));
+  rows.sort((a,b)=>b.revenue-a.revenue);
+  const initials=(n)=>((n||"").replace(/[^a-zA-Z ]/g,"").trim().split(/\s+/).map(w=>w[0]).slice(0,2).join("").toUpperCase())||"•";
+  return <div>
+    <div className="estrip">
+      <div className="estat"><span className="edge" style={{background:"var(--gold)"}}></span><div className="l">Clients</div><div className="v">{rows.length}</div></div>
+      <div className="estat"><span className="edge" style={{background:"#8a9bff"}}></span><div className="l">Repeat clients</div><div className="v">{repeat}</div></div>
+      <div className="estat good"><span className="edge" style={{background:"var(--green)"}}></span><div className="l">Lifetime revenue</div><div className="v">{fmtK(totalRev)}</div></div>
+      <div className="estat"><span className="edge" style={{background:"var(--txt-faint)"}}></span><div className="l">Avg / client</div><div className="v">{fmtK(rows.length?totalRev/rows.length:0)}</div></div>
+    </div>
+    <button className="btn primary" style={{width:"100%",padding:"14px",fontSize:15,marginBottom:14}} onClick={newClient}>＋ Add Client</button>
+    <div style={{marginBottom:14}}>
+      <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search clients…" style={{...INP,width:"100%"}}/>
+    </div>
+    {rows.length?<div className="elist">{rows.map((r,i)=>(
+      <div key={i} className="ecard2" style={{cursor:"pointer"}} onClick={()=>openClient(r)}>
+        <div className="stripe" style={{background:r.balance>0?"var(--orange)":"var(--gold)"}}></div>
+        <div className="ebody">
+          <div className="etop">
+            <div style={{display:"flex",alignItems:"center",gap:11,flex:1,minWidth:0}}>
+              <div className="cb-av">{initials(r.name)}</div>
+              <div style={{minWidth:0}}>
+                <div className="etitle">{r.name}</div>
+                <div className="enote">{r.count} shoot{r.count===1?"":"s"}{r.ig?` · ${r.ig}`:""}</div>
+              </div>
+            </div>
+            <div style={{textAlign:"right"}}>
+              <div style={{fontSize:15,fontWeight:700,color:"var(--green)"}}>${r.revenue.toLocaleString()}</div>
+              {r.balance>0&&<div style={{fontSize:11,color:"var(--orange)"}}>bal ${r.balance.toLocaleString()}</div>}
+            </div>
+          </div>
+          <div className="emeta">
+            {r.phone&&<a className="cb-tel" href={"tel:"+String(r.phone).replace(/[^0-9+]/g,"")} style={{fontSize:12}}>{r.phone}</a>}
+            {r.email&&<span className="chip">✉️ {r.email}</span>}
+          </div>
+        </div>
+      </div>
+    ))}</div>:<div className="empty"><div className="e-ico">👥</div>No clients yet — tap <b>＋ Add Client</b>, or save a booking and the list builds itself.</div>}
+  </div>;
+}
+
+/* ---------- CALL BACKS ---------- */
+function CallBacks({callbacks,addCall,toggleCall,delCall}){
+  const [name,setName]=useState(""),[phone,setPhone]=useState(""),[reason,setReason]=useState(""),[urgent,setUrgent]=useState(false);
+  const [showDone,setShowDone]=useState(false);
+  const pending=callbacks.filter(c=>!c.done).sort((a,b)=>((b.urgent?1:0)-(a.urgent?1:0))||(a.created-b.created));
+  const done=callbacks.filter(c=>c.done);
+  const list=showDone?done:pending;
+  const submit=()=>{ if(!name.trim())return; addCall({name,phone,reason,urgent}); setName("");setPhone("");setReason("");setUrgent(false); };
+  const initials=(n)=>(n.replace(/[^a-zA-Z ]/g,"").trim().split(/\s+/).map(w=>w[0]).slice(0,2).join("").toUpperCase())||"•";
+
+  return <div>
+    <div className="card glass" style={{marginBottom:16}}>
+      <div className="card-h"><h3>📞 Who do you need to call back?</h3><span className="sub">on your phone, tap a number to dial</span></div>
+      <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:10}}>
+        <input style={{...INP,flex:"1 1 180px"}} placeholder="Name" value={name} onChange={e=>setName(e.target.value)}/>
+        <input type="tel" style={{...INP,flex:"1 1 150px"}} placeholder="Phone (optional)" value={phone} onChange={e=>setPhone(e.target.value)}/>
+      </div>
+      <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
+        <input style={{...INP,flex:"1 1 240px"}} placeholder="Why? (e.g. confirm date, send quote)" value={reason} onChange={e=>setReason(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")submit();}}/>
+        <label style={{display:"flex",alignItems:"center",gap:7,fontSize:12.5,color:"var(--txt-dim)",cursor:"pointer",userSelect:"none"}}>
+          <input type="checkbox" checked={urgent} onChange={e=>setUrgent(e.target.checked)} style={{accentColor:"var(--red)",width:16,height:16}}/> Urgent
+        </label>
+        <button className="add-btn" onClick={submit}>＋ Add</button>
+      </div>
+    </div>
+
+    <div className="seg" style={{marginBottom:14}}>
+      <button className={!showDone?"active":""} onClick={()=>setShowDone(false)}>To Call ({pending.length})</button>
+      <button className={showDone?"active":""} onClick={()=>setShowDone(true)}>Done ({done.length})</button>
+    </div>
+
+    {list.length?list.map(c=>(
+      <div key={c.id} className={"cb"+(c.urgent&&!c.done?" urgent":"")+(c.done?" done":"")}>
+        <div className="cb-av">{initials(c.name)}</div>
+        <div className="cb-b">
+          <div className="cb-n">{c.name}{c.phone&&<a className="cb-tel" href={"tel:"+c.phone.replace(/[^0-9+]/g,"")}>{c.phone}</a>}</div>
+          {c.reason&&<div className="cb-r">{c.reason}</div>}
+        </div>
+        <div className="cb-side">
+          {c.urgent&&!c.done&&<span className="urgent-flag">Urgent</span>}
+          <span className="mini-btn" onClick={()=>toggleCall(c.id)}>{c.done?"Reopen":"Called ✓"}</span>
+          <span className="mini-btn" onClick={()=>delCall(c.id)}>Remove</span>
+        </div>
+      </div>
+    )):<div className="empty"><div className="e-ico">{showDone?"📭":"📞"}</div>{showDone?"No completed call-backs yet.":"All caught up — nobody to call back."}</div>}
+  </div>;
+}
+
+/* ---------- PLANNER ---------- */
+function Planner({tasks}){
+  const blocks=useMemo(()=>buildPlanner(tasks),[tasks]);
+  return <div>
+    <div className="card glass" style={{marginBottom:16,background:"linear-gradient(135deg,rgba(201,168,76,0.14),rgba(224,160,48,0.05))"}}>
+      <div className="card-h"><h3>☼ Today's Smart Schedule</h3><span className="sub">auto-built from your priorities · adjusts as things change</span></div>
+      <div style={{fontSize:13,color:"var(--txt-dim)",lineHeight:1.5}}>Your COO sequenced today around energy, deadlines, and revenue. Edits to tasks reshuffle this automatically.</div>
+    </div>
+    <div className="card glass">
+      <div className="timeline">
+        {blocks.map((b,i)=>(
+          <div key={i} className="tblock">
+            <div className="time">{fmtTime(b.time)}</div>
+            <div className="bar" style={{background:b.color}}></div>
+            <div className="blk">
+              <div className="bt">{b.title}</div>
+              <div className="bm">{b.meta} · {b.mins}min</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>;
+}
+
+/* ---------- REVENUE ---------- */
+const STAGES=["lead","contacted","proposal","won"];
+function Revenue({revenue,setRevenue,toast}){
+  const [name,setName]=useState(""),[val,setVal]=useState(""),[desc,setDesc]=useState("");
+  const total=revenue.reduce((s,r)=>s+r.value,0);
+  const advance=(id)=>setRevenue(p=>p.map(r=>{if(r.id!==id)return r;const i=STAGES.indexOf(r.stage);if(i<3){const ns=STAGES[i+1];if(ns==="won")toast("🎉 Deal won! +"+(r.value)+" pipeline");return{...r,stage:ns};}return r;}));
+  const add=()=>{ if(!name.trim())return; setRevenue(p=>[{id:"r"+Date.now(),name,value:parseRevenue("$"+val)||parseInt(val)||0,desc:desc||"New opportunity",stage:"lead"},...p]); setName("");setVal("");setDesc(""); toast("Opportunity added to pipeline"); };
+  const del=(id)=>setRevenue(p=>p.filter(r=>r.id!==id));
+  const ideas=["Email past clients a 'book your fall session' offer","Pitch a winery a recurring monthly reel package","Bundle a LUT pack upsell into every wedding delivery","Offer real estate agents a 5-listing retainer","Create a Father's Day mini-session promo"];
+  return <div className="row">
+    <div className="col" style={{flex:1.5}}>
+      <div className="card glass" style={{background:"linear-gradient(135deg,rgba(76,175,120,0.14),rgba(224,160,48,0.05))"}}>
+        <div className="card-h"><h3>💰 Revenue Mode</h3><span className="sub">total open pipeline</span></div>
+        <div style={{fontSize:34,fontWeight:780,letterSpacing:-1,color:"var(--green)"}}>${total.toLocaleString()}</div>
+        <div style={{fontSize:13,color:"var(--txt-dim)",marginTop:4}}>{revenue.length} active opportunities · advance each stage to close</div>
+      </div>
+      <div className="card glass">
+        <div className="card-h"><h3>📈 Pipeline</h3>
+          <span style={{marginLeft:"auto",display:"flex",gap:8,alignItems:"center"}}>
+            <input value={name} onChange={e=>setName(e.target.value)} placeholder="Opportunity" style={{width:130,padding:"7px 10px",borderRadius:9,border:"1px solid var(--border-2)",background:"#1c1c1c",color:"var(--txt)",fontSize:12,outline:"none"}}/>
+            <input value={val} onChange={e=>setVal(e.target.value)} placeholder="$ value" style={{width:74,padding:"7px 10px",borderRadius:9,border:"1px solid var(--border-2)",background:"#1c1c1c",color:"var(--txt)",fontSize:12,outline:"none"}}/>
+            <button className="add-btn" onClick={add}>＋</button>
+          </span>
+        </div>
+        {revenue.map(r=>(
+          <div key={r.id} className="rev-op">
+            <div className="top">
+              <div className="name">{r.name}</div>
+              <div className="val">{r.value?"$"+r.value.toLocaleString():"—"}</div>
+            </div>
+            <div className="desc">{r.desc}</div>
+            <div className="foot">
+              <span className={"stage "+r.stage}>{r.stage.toUpperCase()}</span>
+              {r.stage!=="won" && <span className="mini-btn" onClick={()=>advance(r.id)}>Advance →</span>}
+              <span className="mini-btn" style={{marginLeft:"auto"}} onClick={()=>del(r.id)}>Remove</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+    <div className="col" style={{flex:1}}>
+      <div className="card glass">
+        <div className="card-h"><h3>💡 Revenue Ideas</h3><span className="sub">from your COO</span></div>
+        {ideas.map((s,i)=><div key={i} className="sugg"><span className="ic">💵</span><span className="txt">{s}.</span></div>)}
+      </div>
+    </div>
+  </div>;
+}
+
+/* ---------- COACH ---------- */
+function Coach({tasks,state}){
+  const open=tasks.filter(t=>!t.done);
+  const cards=[
+    {lbl:"One thing to improve",ic:"📈",color:"var(--accent-2)",body:`You have ${open.filter(t=>daysUntil(t.deadline)<0).length} overdue items. Block 90 minutes this morning to clear the oldest two — overdue work quietly tanks your Business Health score and your peace of mind.`},
+    {lbl:"One thing to automate",ic:"⚙️",color:"var(--accent)",body:"Set up an auto-reply + booking link for new inquiries. You're losing leads in the gap between 'they email' and 'you reply after a shoot.' A Calendly + canned response captures them 24/7."},
+    {lbl:"Marketing idea",ic:"📣",color:"var(--orange)",body:"Film a 30-second 'a day in the life of a Napa videographer' reel. Behind-the-scenes outperforms polished work for reach — and it's the cheapest lead gen you have."},
+    {lbl:"Revenue idea",ic:"💰",color:"var(--green)",body:"Convert one-off clients into retainers. Offer your top 3 past business clients a monthly content package — recurring revenue is the fastest path to your $1M target."},
+    {lbl:"Networking opportunity",ic:"🤝",color:"var(--gold)",body:"Reach out to one local chamber of commerce this week. Chambers are full of restaurants, gyms, and real estate offices — exactly your ideal recurring clients, all in one room."},
+    {lbl:"AI tool worth trying",ic:"🧠",color:"var(--accent-2)",body:"Use AI to draft your follow-up and proposal emails. Speed-to-response wins deals — let the COO write the first draft so you just review and send."},
+  ];
+  return <div>
+    <div className="card glass" style={{marginBottom:16,background:"linear-gradient(135deg,rgba(201,168,76,0.14),rgba(224,160,48,0.05))"}}>
+      <div className="card-h"><h3>✦ Daily Business Coaching</h3><span className="sub">{new Date().toLocaleDateString("en-US",{weekday:"long"})}'s brief</span></div>
+      <div style={{fontSize:13.5,color:"var(--txt)",lineHeight:1.55}}>Six moves to make today's KWelchVisuals run like a world-class operation. Every one answers: does this make more money, reduce stress, deliver faster, or grow the business?</div>
+    </div>
+    <div className="row">
+      <div className="col" style={{flex:1}}>{cards.slice(0,3).map((c,i)=><CoachCard key={i} {...c}/>)}</div>
+      <div className="col" style={{flex:1}}>{cards.slice(3).map((c,i)=><CoachCard key={i} {...c}/>)}</div>
+    </div>
+  </div>;
+}
+function CoachCard({lbl,ic,color,body}){
+  return <div className="coach-card">
+    <div className="lbl" style={{color}}>{ic} {lbl}</div>
+    <div className="body">{body}</div>
+  </div>;
+}
+
+/* ---------- PREVIEW MODAL (smart add) ---------- */
+function PreviewModal({preview,onClose,onCommit}){
+  const {parsed,tpl}=preview;
+  const [t,setT]=useState({...parsed, clientImportance:3, growth:tpl?4:2, stress:2, estHours:tpl?5:1,
+    subs: tpl?tpl.subs:[]});
+  const s=priorityScore(t), stars=scoreToStars(s);
+  const set=(k,v)=>setT(p=>({...p,[k]:v}));
+  return <div className="overlay" onClick={onClose}>
+    <div className="modal glass" onClick={e=>e.stopPropagation()}>
+      <h3>✨ AI parsed your request</h3>
+      <div className="mh-sub">From "{preview.raw}" — review and add. {tpl&&`Auto-expanded into a ${tpl.subs.length}-step project.`}</div>
+
+      <div className="live-score">
+        <div className="big" style={{color:stars>=4?"var(--gold)":"var(--accent-2)"}}>{s}</div>
+        <div className="ld">
+          <div className="s1"><Stars n={stars}/> &nbsp;{STAR_LABEL[stars]} priority</div>
+          <div className="s2">Live AI score — adjust the inputs below and watch it recompute</div>
+        </div>
+      </div>
+
+      <div className="field"><label>Task</label><input value={t.title} onChange={e=>set("title",e.target.value)}/></div>
+      <div className="field-row">
+        <div className="field"><label>Category</label>
+          <select value={t.category} onChange={e=>set("category",e.target.value)}>
+            {CAT_KEYS.map(k=><option key={k} value={k}>{CATEGORIES[k].emoji} {CATEGORIES[k].label}</option>)}
+          </select>
+        </div>
+        <div className="field"><label>Deadline</label><input type="date" value={t.deadline||""} onChange={e=>set("deadline",e.target.value)}/></div>
+      </div>
+      <div className="field-row">
+        <div className="field"><label>Revenue impact ($)</label><input type="number" value={t.revenue} onChange={e=>set("revenue",+e.target.value)}/></div>
+        <div className="field"><label>Est. hours</label><input type="number" step="0.5" value={t.estHours} onChange={e=>set("estHours",+e.target.value)}/></div>
+      </div>
+      <div className="field"><label>Client importance <span className="slider-val">{t.clientImportance}/5</span></label><input type="range" min="1" max="5" value={t.clientImportance} onChange={e=>set("clientImportance",+e.target.value)}/></div>
+      <div className="field"><label>Business growth <span className="slider-val">{t.growth}/5</span></label><input type="range" min="1" max="5" value={t.growth} onChange={e=>set("growth",+e.target.value)}/></div>
+      <div className="field"><label>Stress relief if done <span className="slider-val">{t.stress}/5</span></label><input type="range" min="1" max="5" value={t.stress} onChange={e=>set("stress",+e.target.value)}/></div>
+
+      {tpl && <div className="field"><label>Auto-generated steps ({tpl.subs.length})</label>
+        <div style={{maxHeight:120,overflowY:"auto",fontSize:13,color:"var(--txt-dim)",lineHeight:1.7,paddingLeft:4}}>
+          {tpl.subs.map((s,i)=><div key={i}>· {s}</div>)}
+        </div>
+      </div>}
+
+      <div className="modal-foot">
+        <button className="btn" onClick={onClose}>Cancel</button>
+        <button className="btn primary" onClick={()=>onCommit(t)}>Add to COO</button>
+      </div>
+    </div>
+  </div>;
+}
+
+/* ---------- EDIT MODAL ---------- */
+function EditModal({task,onClose,onSave,onDelete}){
+  const [t,setT]=useState({...task});
+  const s=priorityScore(t), stars=scoreToStars(s);
+  const set=(k,v)=>setT(p=>({...p,[k]:v}));
+  return <div className="overlay" onClick={onClose}>
+    <div className="modal glass" onClick={e=>e.stopPropagation()}>
+      <h3>Edit task</h3>
+      <div className="mh-sub">Tune the inputs — the AI priority recomputes live.</div>
+      <div className="live-score">
+        <div className="big" style={{color:stars>=4?"var(--gold)":"var(--accent-2)"}}>{s}</div>
+        <div className="ld"><div className="s1"><Stars n={stars}/> &nbsp;{STAR_LABEL[stars]} priority</div>
+        <div className="s2">{daysUntil(t.deadline)!==null?(daysUntil(t.deadline)<0?`${-daysUntil(t.deadline)} days overdue`:`Due in ${daysUntil(t.deadline)} days`):"No deadline set"}</div></div>
+      </div>
+      <div className="field"><label>Task</label><input value={t.title} onChange={e=>set("title",e.target.value)}/></div>
+      <div className="field-row">
+        <div className="field"><label>Category</label>
+          <select value={t.category} onChange={e=>set("category",e.target.value)}>
+            {CAT_KEYS.map(k=><option key={k} value={k}>{CATEGORIES[k].emoji} {CATEGORIES[k].label}</option>)}
+          </select></div>
+        <div className="field"><label>Deadline</label><input type="date" value={t.deadline||""} onChange={e=>set("deadline",e.target.value||null)}/></div>
+      </div>
+      <div className="field-row">
+        <div className="field"><label>Revenue ($)</label><input type="number" value={t.revenue} onChange={e=>set("revenue",+e.target.value)}/></div>
+        <div className="field"><label>Est. hours</label><input type="number" step="0.5" value={t.estHours} onChange={e=>set("estHours",+e.target.value)}/></div>
+      </div>
+      <div className="field"><label>Client importance <span className="slider-val">{t.clientImportance}/5</span></label><input type="range" min="1" max="5" value={t.clientImportance} onChange={e=>set("clientImportance",+e.target.value)}/></div>
+      <div className="field"><label>Business growth <span className="slider-val">{t.growth}/5</span></label><input type="range" min="1" max="5" value={t.growth} onChange={e=>set("growth",+e.target.value)}/></div>
+      {t.subs&&t.subs.length>0 && <div className="field"><label>Project steps</label>
+        <div style={{fontSize:13,color:"var(--txt-dim)",lineHeight:1.7}}>{t.subs.map((x,i)=><div key={i}>{x.d?"✓":"○"} {x.t}</div>)}</div></div>}
+      <div className="modal-foot">
+        <button className="btn danger left" onClick={()=>onDelete(t.id)}>Delete</button>
+        <button className="btn" onClick={onClose}>Cancel</button>
+        <button className="btn primary" onClick={()=>onSave(t)}>Save</button>
+      </div>
+    </div>
+  </div>;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+<script>
+  (function(){
+    try{
+      var code = document.getElementById('appcode').textContent;
+      var out = Babel.transform(code, {presets:[['react',{runtime:'classic'}]]}).code;
+      (0,eval)(out);
+    }catch(e){
+      var r=document.getElementById('root');
+      if(r) r.innerHTML='<pre style="color:#ff6b6b;padding:20px;font-size:13px;white-space:pre-wrap">BUILD ERROR: '+(e.message||'')+'\n\n'+((e.stack||'').split('\n').slice(0,5).join('\n'))+'</pre>';
+    }
+  })();
+</script>
+</body>
+</html>
