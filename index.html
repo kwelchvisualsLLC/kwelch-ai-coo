@@ -919,7 +919,7 @@ function App(){
         // Stored under the accepted kw_edit_inbox key as { b, c, _vb:true }. Union
         // with whatever this device already has, so nothing is ever lost, then push
         // the union back for the other device. Failures are swallowed (never Offline).
-        const vbStore=null; // 2026-07-19: ignore cloud bookings permanently
+        const vbStore=null; // 2026-07-19: ignore cloud bookings permanently (deploy)
         const bkCloud=vbStore&&Array.isArray(vbStore.b)?vbStore.b:[];
         const clCloud=vbStore&&Array.isArray(vbStore.c)?vbStore.c:[];
         const bkMerged=freshBookings(mergeById(load("vb_bookings",[]),bkCloud));   // drop pre-cutoff history
