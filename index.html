@@ -631,7 +631,7 @@ function cooMeaningful(v){ return Array.isArray(v) ? v.some(x=>!x||!x.sample) : 
 // Old app versions read it as an array, see a non-array, and safely ignore it.
 const VB_SYNC_KEY="kw_edit_inbox";
 // Bump this token to force a fresh, one-time full reset on every device's next open.
-const RESET_TOKEN="reset-2026-07-13-full";
+const RESET_TOKEN="reset-2026-07-19-empty";
 async function cooPushSafe(key,value){ try{ await cooPush(key,value); return true; }catch(e){ return false; } }
 // Clear a device + the cloud to empty for every collection. Used by the one-time
 // auto-reset and the "Reset all data" button.
@@ -640,7 +640,7 @@ async function cooResetAll(){
   try{ for(const [k,v] of Object.entries(empties)) await cooPush(k,v); await cooPush("kw_state_v2",DEFAULT_STATE); }catch(e){}
   try{
     for(const k of Object.keys(empties)) localStorage.setItem(k, JSON.stringify(empties[k]==="[]"?[]:empties[k]));
-    ["kw_tasks_v2","kw_rev_v2","kw_edits_v1","kw_calls_v1"].forEach(k=>localStorage.setItem(k,"[]"));
+    ["kw_tasks_v2","kw_rev_v2","kw_edits_v1","kw_calls_v1"].forEach(k=>localStorage.setItem(k,"[]")); localStorage.removeItem("vb_bookings"); localStorage.removeItem("vb_clients");
     localStorage.setItem("kw_state_v2",JSON.stringify(DEFAULT_STATE));
   }catch(e){}
 }
@@ -919,7 +919,7 @@ function App(){
         // Stored under the accepted kw_edit_inbox key as { b, c, _vb:true }. Union
         // with whatever this device already has, so nothing is ever lost, then push
         // the union back for the other device. Failures are swallowed (never Offline).
-        const vbStore=(server.kw_edit_inbox && !Array.isArray(server.kw_edit_inbox) && typeof server.kw_edit_inbox==="object") ? server.kw_edit_inbox : null;
+        const vbStore=null; // 2026-07-19: ignore cloud bookings permanently
         const bkCloud=vbStore&&Array.isArray(vbStore.b)?vbStore.b:[];
         const clCloud=vbStore&&Array.isArray(vbStore.c)?vbStore.c:[];
         const bkMerged=freshBookings(mergeById(load("vb_bookings",[]),bkCloud));   // drop pre-cutoff history
