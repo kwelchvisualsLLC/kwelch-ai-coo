@@ -1896,7 +1896,7 @@ function Bookings({bookings,clients,setView,newBooking,openBooking}){
   const today=new Date(); today.setHours(0,0,0,0);
   const withMeta=(bookings||[]).map(b=>({b, d:daysUntil(b.date), bal:vbBalance(b), paid:vbPaid(b)}));
   const upcoming=withMeta.filter(x=>x.d!==null&&x.d>=0);
-  const monthRev=withMeta.filter(x=>{const dt=new Date(x.b.date); return x.b.depositStatus==='yes'&&!isNaN(dt)&&dt.getFullYear()===today.getFullYear();}).reduce((s,x)=>s+(Number(x.b.totalPrice)||0),0);
+  const monthRev=withMeta.filter(x=>{const dt=new Date(x.b.date); return !isNaN(dt)&&dt.getFullYear()===today.getFullYear();}).reduce((s,x)=>s+(Number(x.b.totalPrice)||0),0);
   const awaiting=withMeta.reduce((s,x)=>s+(x.bal>0?x.bal:0),0);
   const fmtK=n=>n>=1000?"$"+(n/1000).toFixed(n%1000?1:0)+"k":"$"+Math.round(n);
   const filters=[["all","All"],["upcoming","Upcoming"],["past","Past"],["unpaid","Unpaid"]];
@@ -1918,7 +1918,7 @@ function Bookings({bookings,clients,setView,newBooking,openBooking}){
     </div>
     <div className="sugg"><span className="ic">🎬</span><span className="txt">Every booking is auto-queued in your <b>Edits</b> pipeline. Getting paid doesn't finish the edit — you deliver it there.</span><span className="act" onClick={()=>setView("edits")}>Edits</span></div>
     <div className="seg" style={{marginBottom:14}}>{filters.map(([k,l])=><button key={k} className={filter===k?"active":""} onClick={()=>setFilter(k)}>{l}</button>)}</div>
-    {list.length?<div className="elist" style={{maxHeight:400,overflowY:'auto',paddingRight:4}}>{list.map((x,i)=>{
+    {list.length?<div className="elist" style={{maxHeight:600,overflowY:'scroll',WebkitOverflowScrolling:'touch',paddingRight:4}}>{list.map((x,i)=>{
       const b=x.b; const ty=EDIT_TYPES[shootTypeToEditType(b.shootType)]||EDIT_TYPES.other;
       const stripe=x.paid?"var(--green)":vbDepositPaid(b)?"var(--gold)":"var(--red)";
       return <div key={i} className="ecard2" style={{cursor:"pointer"}} onClick={()=>openBooking(b)}>
