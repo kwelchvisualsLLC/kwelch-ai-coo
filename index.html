@@ -1151,7 +1151,7 @@ function App(){
       {/* PREVIEW MODAL (smart add) */}
       {preview && <PreviewModal preview={preview} onClose={()=>setPreview(null)} onCommit={(t)=>{commitTask(t);setPreview(null);}}/>}
       {editing && <EditModal task={editing} onClose={()=>setEditing(null)} onSave={saveTask} onDelete={delTask}/>}
-      {bookingModal && <BookingModal data={bookingModal} clients={clients} onClose={()=>setBookingModal(null)} onSave={saveBooking} onDelete={deleteBooking}
+      {bookingModal && <BookingModal data={bookingModal} clients={clients} bookings={bookings} onClose={()=>setBookingModal(null)} onSave={saveBooking} onDelete={deleteBooking}
         onInvoice={(b)=>{ setBookingModal(null); setInvoiceView(generateInvoice(b)); }}/>}
       {invoiceView && <InvoiceModal inv={invoiceView} onClose={()=>setInvoiceView(null)}/>}
       {clientModal && <ClientModal data={clientModal} onClose={()=>setClientModal(null)}
@@ -1538,7 +1538,7 @@ function Edits({edits,addEdit,moveEdit,delEdit,bookings}){
 
 /* ---------- BOOKINGS (live from VisualBook, same-origin) ---------- */
 /* ---------- NEW SMART BOOKING (full VisualBook form, in this app) ---------- */
-function BookingModal({data,onClose,onSave,onDelete,onInvoice,clients}){
+function BookingModal({data,onClose,onSave,onDelete,onInvoice,clients,bookings=[]}){
   const [b,setB]=useState({...data.booking});
   const [smart,setSmart]=useState("");
   const smartRef=useRef("");
@@ -1586,7 +1586,7 @@ function BookingModal({data,onClose,onSave,onDelete,onInvoice,clients}){
         </div>
         {matched && <div style={{marginTop:8,fontSize:12.5,fontWeight:700,color:matched.startsWith("✓")?"var(--green)":"var(--gold)"}}>{matched}</div>}
       </div>}
-      <div className="field"><label>Client name</label><input value={b.clientName} onChange={e=>set("clientName",e.target.value)} placeholder="Who's this for?"/></div>
+      <div className="field"><label>Client name</label><input value={b.clientName} onChange={e=>set("clientName",e.target.value)} placeholder="Who's this for?"/></div>{b.clientName&&bookings.filter(x=>x.clientName===b.clientName&&x.id!==b.id).length>0&&<div style={{background:'#1a1000',border:'1px solid #C9A84C',borderRadius:6,padding:'6px 10px',marginBottom:8,fontSize:12,color:'#F5F5F5'}}><div style={{color:'#C9A84C',fontWeight:700,marginBottom:4}}>Existing shoots for {b.clientName}:</div>{bookings.filter(x=>x.clientName===b.clientName&&x.id!==b.id).map(x=><div key={x.id} style={{paddingLeft:8}}>{x.date}{x.shootType?' – '+x.shootType:''}</div>)}</div>}
       <div className="field-row">
         <div className="field"><label>Phone</label><input value={b.phone} onChange={e=>set("phone",e.target.value)} placeholder="707-555-0000"/></div>
         <div className="field"><label>Email</label><input value={b.email} onChange={e=>set("email",e.target.value)} placeholder="name@email.com"/></div>
