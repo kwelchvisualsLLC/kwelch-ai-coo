@@ -1086,6 +1086,7 @@ function App(){
     {k:"planner",label:"Daily Planner"},
     {k:"revenue",label:"Revenue Mode",badge:revenue.length},
     {k:"coach",label:"Business Coach"},
+    {k:"wealth",label:"Wealth Agent"},
   ];
 
   const hour=new Date().getHours();
@@ -1145,6 +1146,7 @@ function App(){
           {view==="planner" && <Planner tasks={tasks}/>}
           {view==="revenue" && <Revenue {...{revenue,setRevenue,toast}}/>}
           {view==="coach" && <Coach {...{tasks,state}}/>}
+         {view==="wealth" && <WealthAgent bookings={bookings}/>}
         </div>
       </div>
 
@@ -2124,6 +2126,202 @@ function Revenue({revenue,setRevenue,toast}){
 }
 
 /* ---------- COACH ---------- */
+function WealthAgent({bookings}){
+  const API='https://kwelch-outreach-hub.onrender.com/api/coo';
+  const CKEY='vbk_9f3a1c7e8b2d4f60a5e1c9d3b7f2a4e8c6109d52';
+  const WKEY='kw_wealth_data';
+  const [loaded,setLoaded]=React.useState(false);
+  const [streams,setStreams]=React.useState([
+    {id:'video',name:'Video Production',type:'active',monthly:0},
+    {id:'youtube',name:'YouTube AdSense',type:'passive',monthly:0},
+    {id:'brands',name:'Brand Deals',type:'active',monthly:0},
+    {id:'realty',name:'Real Estate Commissions',type:'active',monthly:0},
+    {id:'digital',name:'Digital Products',type:'passive',monthly:0},
+    {id:'retainer',name:'Gov / Corp Retainer',type:'recurring',monthly:0},
+  ]);
+  const [assets,setAssets]=React.useState('');
+  const [liabilities,setLiabilities]=React.useState('');
+  const [passiveGoal,setPassiveGoal]=React.useState(10000);
+  const [saving,setSaving]=React.useState(false);
+  const [tab,setTab]=React.useState('streams');
+  React.useEffect(()=>{
+    fetch(API,{headers:{'x-api-key':CKEY}})
+      .then(r=>r.json())
+      .then(d=>{const v=d[WKEY];if(v){const p=typeof v==='string'?JSON.parse(v):v;
+        if(p.streams)setStreams(p.streams);if(p.assets!=null)setAssets(p.assets);
+        if(p.liabilities!=null)setLiabilities(p.liabilities);if(p.passiveGoal)setPassiveGoal(p.passiveGoal);}
+      }).catch(()=>{}).finally(()=>setLoaded(true));
+  },[]);
+  const saveData=(ns,na,nl,ng)=>{
+    setSaving(true);
+    const payload={streams:ns||streams,assets:na!=null?na:assets,liabilities:nl!=null?nl:liabilities,passiveGoal:ng||passiveGoal};
+    fetch(API,{method:'POST',headers:{'Content-Type':'application/json','x-api-key':CKEY},body:JSON.stringify({key:WKEY,value:JSON.stringify(payload)})}).catch(()=>{}).finally(()=>setSaving(false));
+  };
+  const totalMo=streams.reduce((s,x)=>s+(Number(x.monthly)||0),0);
+  const passiveMo=streams.filter(x=>x.type!=='active').reduce((s,x)=>s+(Number(x.monthly)||0),0);
+  const nw=(Number(assets)||0)-(Number(liabilities)||0);
+  const passivePct=totalMo>0?Math.round(passiveMo/totalMo*100):0;
+  const yr=new Date().getFullYear();
+  const bookingRev=(bookings||[]).filter(b=>{const d=new Date(b.date);return !isNaN(d)&&d.getFullYear()===yr;}).reduce((s,b)=>s+(Number(b.totalPrice)||0),0);
+  const revScore=Math.min(30,Math.round(bookingRev/12000*30));
+  const passScore=Math.min(30,passivePct);
+  const streamScore=Math.min(20,streams.filter(x=>Number(x.monthly)>0).length*4);
+  const nwScore=Math.min(20,nw>0?Math.min(20,Math.round(nw/50000*20)):0);
+  const score=revScore+passScore+streamScore+nwScore;
+  const sColor=score>=70?'#22c55e':score>=40?'#C9A84C':'#ef4444';
+  const cType={active:'#C9A84C',passive:'#22c55e',recurring:'#3b82f6'};
+  const fmtW=(v)=>{const n=Math.abs(v||0);return (v<0?'-':'')+'$'+(n>=1000?(n/1000).toFixed(1)+'K':n.toLocaleString());};
+  const moIncome='$'+(totalMo>=1000?(totalMo/1000).toFixed(1)+'K':String(totalMo));
+  const moves=[
+    {ic:'🏛️',pri:true,t:'Land a Gov/School Contract',b:'File for local vendor registration or DVBE certification. School district AV contracts pay $15K-$60K/yr retainers. One contract beats 10 brand deals.'},
+    {ic:'💰',pri:true,t:'Build a 3-Month Cash Reserve',b:'3 months expenses in a HYSA stops you from accepting low-paying gigs under pressure. Target: $15K-$25K liquid at all times.'},
+    {ic:'🏠',pri:true,t:'Activate Your Real Estate License',b:'One commission = $5K-$20K. Film content at your listings to cross-promote KWelchVisuals. License is untapped revenue sitting idle.'},
+    {ic:'📦',pri:false,t:'Drop a Digital Product',b:'Lightroom preset pack, FX3 guide, or Final Cut template. $97-$297 price point. One build = infinite revenue. Your audience is the market.'},
+    {ic:'📱',pri:false,t:'Sell YouTube Brand Retainers',b:'Pitch 4 videos/month to 3 brands at $2K each = $6K/mo recurring. 60K subscribers + press in NYT/XXL/Fader = premium positioning.'},
+  ];
+  if(!loaded)return <div style={{padding:60,textAlign:'center',color:'#555'}}>Loading Wealth Agent...</div>;
+  return (
+    <div style={{paddingBottom:80}}>
+      <div style={{background:'linear-gradient(135deg,#0A0A0A 50%,#141000)',borderBottom:'2px solid #C9A84C',padding:'24px 20px 20px'}}>
+        <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:16}}>
+          <span style={{fontSize:28}}>💎</span>
+          <div style={{flex:1}}>
+            <div style={{fontSize:19,fontWeight:900,color:'#F5F5F5',letterSpacing:2}}>WEALTH AGENT</div>
+            <div style={{fontSize:10,color:'#C9A84C',fontWeight:700,letterSpacing:3}}>AI WEALTH STRATEGY</div>
+          </div>
+          {saving&&<span style={{fontSize:11,color:'#888'}}>Saving...</span>}
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10}}>
+          <div style={{background:'rgba(201,168,76,0.1)',border:'1px solid rgba(201,168,76,0.3)',borderRadius:10,padding:'12px 8px',textAlign:'center'}}>
+            <div style={{fontSize:30,fontWeight:900,color:sColor}}>{score}</div>
+            <div style={{fontSize:9,color:'#666',fontWeight:700,letterSpacing:1,marginTop:2}}>WEALTH SCORE</div>
+          </div>
+          <div style={{background:'rgba(255,255,255,0.04)',border:'1px solid #1a1a1a',borderRadius:10,padding:'12px 8px',textAlign:'center'}}>
+            <div style={{fontSize:17,fontWeight:900,color:'#F5F5F5'}}>{moIncome}</div>
+            <div style={{fontSize:9,color:'#666',fontWeight:700,letterSpacing:1,marginTop:2}}>MO. INCOME</div>
+          </div>
+          <div style={{background:'rgba(255,255,255,0.04)',border:'1px solid #1a1a1a',borderRadius:10,padding:'12px 8px',textAlign:'center'}}>
+            <div style={{fontSize:17,fontWeight:900,color:'#22c55e'}}>{passivePct}%</div>
+            <div style={{fontSize:9,color:'#666',fontWeight:700,letterSpacing:1,marginTop:2}}>PASSIVE</div>
+          </div>
+          <div style={{background:'rgba(255,255,255,0.04)',border:'1px solid #1a1a1a',borderRadius:10,padding:'12px 8px',textAlign:'center'}}>
+            <div style={{fontSize:17,fontWeight:900,color:nw>=0?'#C9A84C':'#ef4444'}}>{fmtW(nw)}</div>
+            <div style={{fontSize:9,color:'#666',fontWeight:700,letterSpacing:1,marginTop:2}}>NET WORTH</div>
+          </div>
+        </div>
+      </div>
+      <div style={{display:'flex',background:'#0A0A0A',borderBottom:'1px solid #1a1a1a',position:'sticky',top:0,zIndex:10}}>
+        {[['streams','STREAMS'],['moves','MOVES'],['networth','NET WORTH']].map(([k,l])=>(
+          <button key={k} onClick={()=>setTab(k)} style={{flex:1,padding:'11px 0',background:'none',border:'none',borderBottom:tab===k?'2px solid #C9A84C':'2px solid transparent',color:tab===k?'#C9A84C':'#444',fontWeight:700,fontSize:11,cursor:'pointer',letterSpacing:1}}>{l}</button>
+        ))}
+      </div>
+      {tab==='streams'&&<div style={{padding:16}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+          <span style={{fontSize:13,fontWeight:700,color:'#F5F5F5'}}>Monthly Income Streams</span>
+          <span style={{fontSize:11,color:'#888'}}>YTD: <b style={{color:'#C9A84C'}}>{'$'+bookingRev.toLocaleString()}</b></span>
+        </div>
+        {streams.map((s,i)=>(
+          <div key={s.id} style={{background:'#111',borderRadius:10,padding:'12px 14px',marginBottom:8,border:'1px solid #1e1e1e',display:'flex',alignItems:'center',gap:10}}>
+            <div style={{width:4,height:36,borderRadius:2,background:cType[s.type]||'#888',flexShrink:0}}/>
+            <div style={{flex:1}}>
+              <div style={{fontSize:13,fontWeight:700,color:'#F5F5F5'}}>{s.name}</div>
+              <div style={{fontSize:9,color:cType[s.type]||'#888',fontWeight:700,textTransform:'uppercase',letterSpacing:1}}>{s.type}</div>
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:4}}>
+              <span style={{color:'#555',fontSize:12}}>$</span>
+              <input type="number" value={s.monthly||''} placeholder="0"
+                onChange={e=>{const ns=streams.map((x,j)=>j===i?{...x,monthly:Number(e.target.value)||0}:x);setStreams(ns);}}
+                onBlur={()=>saveData(streams)}
+                style={{width:70,background:'#0A0A0A',border:'1px solid #2a2a2a',borderRadius:6,padding:'5px 7px',color:'#F5F5F5',fontSize:13,fontWeight:700,textAlign:'right'}}/>
+              <span style={{color:'#333',fontSize:10}}>/mo</span>
+            </div>
+          </div>
+        ))}
+        <div style={{background:'#111',borderRadius:10,padding:14,marginTop:12,border:'1px solid #2a2a2a'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+            <span style={{fontSize:12,fontWeight:700,color:'#F5F5F5'}}>Passive Income Goal</span>
+            <div style={{display:'flex',alignItems:'center',gap:3}}>
+              <span style={{color:'#555',fontSize:12}}>$</span>
+              <input type="number" value={passiveGoal} onChange={e=>setPassiveGoal(Number(e.target.value)||0)} onBlur={()=>saveData()}
+                style={{width:70,background:'#0A0A0A',border:'1px solid #2a2a2a',borderRadius:6,padding:'4px 7px',color:'#C9A84C',fontSize:13,fontWeight:700,textAlign:'right'}}/>
+              <span style={{color:'#333',fontSize:10}}>/mo</span>
+            </div>
+          </div>
+          <div style={{background:'#1a1a1a',borderRadius:4,height:8,overflow:'hidden'}}>
+            <div style={{height:'100%',background:'linear-gradient(90deg,#C9A84C,#ffd060)',borderRadius:4,width:Math.min(100,passiveGoal>0?Math.round(passiveMo/passiveGoal*100):0)+'%',transition:'width 0.6s'}}/>
+          </div>
+          <div style={{display:'flex',justifyContent:'space-between',marginTop:6}}>
+            <span style={{fontSize:10,color:'#666'}}>{'$'+passiveMo.toLocaleString()+'/mo passive'}</span>
+            <span style={{fontSize:10,color:'#C9A84C',fontWeight:700}}>{passiveGoal>0?Math.round(passiveMo/passiveGoal*100):0}{'% to goal'}</span>
+          </div>
+        </div>
+      </div>}
+      {tab==='moves'&&<div style={{padding:16}}>
+        <div style={{fontSize:13,fontWeight:700,color:'#F5F5F5',marginBottom:4}}>Your Next Wealth Moves</div>
+        <div style={{fontSize:11,color:'#666',marginBottom:14}}>Tailored to your business profile</div>
+        {moves.map((m,i)=>(
+          <div key={i} style={{background:'#111',borderRadius:10,padding:'14px 16px',marginBottom:10,border:'1px solid #1e1e1e',borderLeft:m.pri?'3px solid #C9A84C':'3px solid #222'}}>
+            <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:6}}>
+              <span style={{fontSize:20}}>{m.ic}</span>
+              <span style={{flex:1,fontSize:13,fontWeight:800,color:'#F5F5F5'}}>{m.t}</span>
+              {m.pri&&<span style={{background:'rgba(201,168,76,0.15)',color:'#C9A84C',fontSize:9,fontWeight:700,padding:'2px 7px',borderRadius:4,letterSpacing:1}}>HIGH</span>}
+            </div>
+            <div style={{fontSize:12,color:'#999',lineHeight:1.55,paddingLeft:30}}>{m.b}</div>
+          </div>
+        ))}
+      </div>}
+      {tab==='networth'&&<div style={{padding:16}}>
+        <div style={{fontSize:13,fontWeight:700,color:'#F5F5F5',marginBottom:4}}>Net Worth Tracker</div>
+        <div style={{fontSize:11,color:'#666',marginBottom:14}}>Track your assets vs liabilities</div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:14}}>
+          <div style={{background:'#111',borderRadius:10,padding:14,border:'1px solid #1e1e1e'}}>
+            <div style={{fontSize:10,color:'#22c55e',fontWeight:700,letterSpacing:1,marginBottom:8}}>ASSETS</div>
+            <div style={{display:'flex',alignItems:'center',gap:3}}>
+              <span style={{color:'#555',fontSize:15}}>$</span>
+              <input type="number" value={assets||''} placeholder="0" onChange={e=>setAssets(Number(e.target.value)||0)} onBlur={()=>saveData()}
+                style={{width:'100%',background:'#0A0A0A',border:'1px solid #2a2a2a',borderRadius:8,padding:8,color:'#22c55e',fontSize:17,fontWeight:800,textAlign:'right'}}/>
+            </div>
+            <div style={{fontSize:9,color:'#333',marginTop:5}}>Gear, savings, property, investments</div>
+          </div>
+          <div style={{background:'#111',borderRadius:10,padding:14,border:'1px solid #1e1e1e'}}>
+            <div style={{fontSize:10,color:'#ef4444',fontWeight:700,letterSpacing:1,marginBottom:8}}>LIABILITIES</div>
+            <div style={{display:'flex',alignItems:'center',gap:3}}>
+              <span style={{color:'#555',fontSize:15}}>$</span>
+              <input type="number" value={liabilities||''} placeholder="0" onChange={e=>setLiabilities(Number(e.target.value)||0)} onBlur={()=>saveData()}
+                style={{width:'100%',background:'#0A0A0A',border:'1px solid #2a2a2a',borderRadius:8,padding:8,color:'#ef4444',fontSize:17,fontWeight:800,textAlign:'right'}}/>
+            </div>
+            <div style={{fontSize:9,color:'#333',marginTop:5}}>Loans, credit, debt balances</div>
+          </div>
+        </div>
+        <div style={{background:'linear-gradient(135deg,#0A0A0A,#0f0d00)',borderRadius:12,padding:20,textAlign:'center',border:'1px solid rgba(201,168,76,0.2)',marginBottom:14}}>
+          <div style={{fontSize:10,color:'#666',fontWeight:700,letterSpacing:2,marginBottom:4}}>NET WORTH</div>
+          <div style={{fontSize:38,fontWeight:900,color:nw>=0?'#C9A84C':'#ef4444'}}>{fmtW(nw)}</div>
+          <div style={{fontSize:10,color:'#444',marginTop:6}}>Assets minus Liabilities</div>
+        </div>
+        <div style={{background:'#111',borderRadius:10,padding:14,border:'1px solid #1e1e1e'}}>
+          <div style={{fontSize:12,fontWeight:700,color:'#F5F5F5',marginBottom:12}}>Wealth Score Breakdown</div>
+          {[
+            {lbl:'Revenue Velocity',v:revScore,max:30,note:'$'+Math.round(bookingRev/12).toLocaleString()+'/mo from bookings'},
+            {lbl:'Passive Income %',v:passScore,max:30,note:passivePct+'% is passive/recurring'},
+            {lbl:'Income Diversification',v:streamScore,max:20,note:streams.filter(x=>Number(x.monthly)>0).length+' active streams'},
+            {lbl:'Net Worth Position',v:nwScore,max:20,note:'$'+(nw>0?(nw/1000).toFixed(0):0)+'K net worth'},
+          ].map(({lbl,v,max,note})=>(
+            <div key={lbl} style={{marginBottom:10}}>
+              <div style={{display:'flex',justifyContent:'space-between',marginBottom:3}}>
+                <span style={{fontSize:11,color:'#aaa'}}>{lbl}</span>
+                <span style={{fontSize:11,color:'#C9A84C',fontWeight:700}}>{v+'/'+max}</span>
+              </div>
+              <div style={{background:'#1a1a1a',borderRadius:3,height:5,overflow:'hidden'}}>
+                <div style={{height:'100%',background:'#C9A84C',width:Math.round(v/max*100)+'%',borderRadius:3}}/>
+              </div>
+              <div style={{fontSize:9,color:'#333',marginTop:2}}>{note}</div>
+            </div>
+          ))}
+        </div>
+      </div>}
+    </div>
+  );
+}
 function Coach({tasks,state}){
   const open=tasks.filter(t=>!t.done);
   const cards=[
